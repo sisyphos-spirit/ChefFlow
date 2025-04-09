@@ -3,24 +3,25 @@ import { supabase } from './src/lib/supabase'
 import Auth from './src/components/Auth'
 import Account from './src/components/Account'
 import { View } from 'react-native'
-import { Session } from '@supabase/supabase-js'
+import { useUserStore } from './src/store/useUserStore'
 
 export default function App() {
-  const [session, setSession] = useState<Session | null>(null)
+  const user = useUserStore((state) => state.user) // Obtener el usuario del store
+  const setUser = useUserStore((state) => state.setUser) // Setter del usuario
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
+      setUser(session?.user || null) // Guardar el usuario en el store
     })
 
     supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
+      setUser(session?.user || null) // Actualizar el usuario en el store
     })
   }, [])
 
   return (
     <View>
-      {session && session.user ? <Account key={session.user.id} session={session} /> : <Auth />}
+      {user ? <Account /> : <Auth />}
     </View>
   )
 }

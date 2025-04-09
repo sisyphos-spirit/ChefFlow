@@ -2,26 +2,27 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { StyleSheet, View, Alert } from 'react-native'
 import { Button, Input } from '@rneui/themed'
-import { Session } from '@supabase/supabase-js'
+import { useUserStore } from '../store/useUserStore'
 
-export default function Account({ session }: { session: Session }) {
+export default function Account() {
+  const user = useUserStore((state) => state.user) // Obtener el usuario del store
   const [loading, setLoading] = useState(true)
   const [username, setUsername] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
 
   useEffect(() => {
-    if (session) getProfile()
-  }, [session])
+    if (user) getProfile()
+  }, [user])
 
   async function getProfile() {
     try {
       setLoading(true)
-      if (!session?.user) throw new Error('No user on the session!')
+      if (!user) throw new Error('No user available!')
 
       const { data, error, status } = await supabase
         .from('usuarios')
         .select(`username, avatar_url`)
-        .eq('id', session?.user.id)
+        .eq('id', user.id)
         .single()
       if (error && status !== 406) {
         throw error
@@ -49,10 +50,10 @@ export default function Account({ session }: { session: Session }) {
   }) {
     try {
       setLoading(true)
-      if (!session?.user) throw new Error('No user on the session!')
+      if (!user) throw new Error('No user available!')
 
       const updates = {
-        id: session?.user.id,
+        id: user.id,
         username,
         avatar_url,
         updated_at: new Date(),
@@ -75,7 +76,7 @@ export default function Account({ session }: { session: Session }) {
   return (
     <View style={styles.container}>
       <View style={[styles.verticallySpaced, styles.mt20]}>
-        <Input label="Email" value={session?.user?.email} disabled />
+        <Input label="Email" value={user?.email} disabled />
       </View>
       <View style={styles.verticallySpaced}>
         <Input label="Username" value={username || ''} onChangeText={(text) => setUsername(text)} />
