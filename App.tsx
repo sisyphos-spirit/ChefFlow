@@ -4,6 +4,8 @@ import Auth from './src/components/Auth'
 import Account from './src/components/Account'
 import { View } from 'react-native'
 import { useUserStore } from './src/store/useUserStore'
+import MainTabs from './src/navigation/mainTabs'
+import { NavigationContainer } from '@react-navigation/native'
 
 export default function App() {
   const user = useUserStore((state) => state.user) // Obtener el usuario del store
@@ -20,8 +22,8 @@ export default function App() {
   }, [])
 
   return (
-    <View>
-      {user ? <Account /> : <Auth />}
-    </View>
+    <NavigationContainer>
+      {user ? <MainTabs /> : <Auth />}
+    </NavigationContainer>
   )
 }
