@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { StyleSheet, View, Alert } from 'react-native'
 import { Button, Input } from '@rneui/themed'
 import { useUserStore } from '../store/useUserStore'
+import Avatar from '../components/Avatar'
 
 export default function Account() {
   const user = useUserStore((state) => state.user) // Obtener el usuario del store
@@ -59,7 +60,7 @@ export default function Account() {
         updated_at: new Date(),
       }
 
-      const { error } = await supabase.from('profiles').upsert(updates)
+      const { error } = await supabase.from('usuarios').upsert(updates)
 
       if (error) {
         throw error
@@ -82,6 +83,17 @@ export default function Account() {
         <Input label="Username" value={username || ''} onChangeText={(text) => setUsername(text)} />
       </View>
 
+      <View>
+        <Avatar
+          size={200}
+          url={avatarUrl}
+          onUpload={(url: string) => {
+            setAvatarUrl(url)
+            updateProfile({ username, avatar_url: url })
+          }}
+        />
+    </View>
+
       <View style={[styles.verticallySpaced, styles.mt20]}>
         <Button
           title={loading ? 'Loading ...' : 'Update'}
@@ -89,6 +101,7 @@ export default function Account() {
           disabled={loading}
         />
       </View>
+
 
       <View style={styles.verticallySpaced}>
         <Button title="Sign Out" onPress={() => supabase.auth.signOut()} />

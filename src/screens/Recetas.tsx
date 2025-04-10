@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react'
-import { View } from 'react-native'
+import { View, Text, Alert } from 'react-native'
 import { useUserStore } from '../store/useUserStore'
-import { Text } from '@rneui/themed'
+import { supabase } from '../lib/supabase'
+import { useState, useEffect } from 'react'
+import Imagen from '../components/Avatar'
+import { Input } from '@rneui/themed'
 
 export default function Recetas() {
     const user = useUserStore((state) => state.user) // Obtener el usuario del store
