@@ -20,7 +20,7 @@ export default function Img_receta({ url, size = 150, onUpload }: Props) {
 
   async function downloadImage(path: string) {
     try {
-      const { data, error } = await supabase.storage.from('recetas').download(path)
+      const { data, error } = await supabase.storage.from('avatars').download(path)
 
       if (error) {
         throw error
@@ -44,8 +44,10 @@ export default function Img_receta({ url, size = 150, onUpload }: Props) {
 
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsMultipleSelection: false,
         allowsEditing: true,
         quality: 1,
+        exif: false,
       })
 
       if (result.canceled || !result.assets || result.assets.length === 0) {
@@ -61,9 +63,9 @@ export default function Img_receta({ url, size = 150, onUpload }: Props) {
       }
 
       const arraybuffer = await fetch(image.uri).then((res) => res.arrayBuffer())
-      const fileExt = image.uri.split('.').pop()?.toLowerCase() ?? 'jpeg'
+      
+      const fileExt = image.uri?.split('.').pop()?.toLowerCase() ?? 'jpeg'
       const path = `${Date.now()}.${fileExt}`
-
       const { data, error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(path, arraybuffer, {
@@ -78,6 +80,8 @@ export default function Img_receta({ url, size = 150, onUpload }: Props) {
     } catch (error) {
       if (error instanceof Error) {
         Alert.alert(error.message)
+      } else {
+        throw error
       }
     } finally {
       setUploading(false)
