@@ -9,31 +9,40 @@ import RecetaItem from '../components/RecetaItem';
 import { useRecetas } from '../hooks/useRecetas'
 import RecetaForm from '../components/RecetaForm'
 import { Link, router } from 'expo-router'
+import { navigate } from 'expo-router/build/global-state/routing'
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../navigation/types';
 
 export default function Recetas() {
+  type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'ListaRecetas'>;
+
   const user = useUserStore((state) => state.user) // Obtener el usuario del store
   const { recetas, fetchRecetas, deleteReceta, createReceta, loading } = useRecetas();
+  const navigation = useNavigation<NavigationProp>(); // Obtener la navegación
 
   useEffect(() => {
     if (user) fetchRecetas(); // Obtener recetas al cargar el componente
   }, [user])
 
+  const goToEditor = () => {
+    navigation.navigate('RecetaForm');
+  };
+
   return (
     <View style={{ padding: 20 }}>
       {user ? (
         <>
-          <Text style={{ fontSize: 18, marginBottom: 10 }}>Tus Recetas</Text>
-
           {/* Formulario para crear una nueva receta */}
           <View style={{ marginBottom: 20 }}>
             <Button
               title="Crear Receta"
-              onPress={() => { router.push('./CrearReceta') }}
+              onPress={() => { goToEditor() }}
               buttonStyle={{ backgroundColor: '#007BFF' }}></Button>
           </View>
 
           {/* Lista de recetas */}
-          <FlatList
+          <FlatList style={{ marginTop: 60 }}
             data={recetas}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
