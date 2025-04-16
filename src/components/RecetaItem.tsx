@@ -24,12 +24,6 @@ export default function RecetaItem({ item, onDelete, loading }: {
       <Input label="Título" value={titulo} onChangeText={setTitulo} />
       <Input label="Descripción" value={descripcion} onChangeText={setDescripcion} />
       <Img_receta size={200} url={recetaUrl} onUpload={setRecetaUrl} />
-      <Button
-        title="Eliminar"
-        onPress={() => onDelete(item.id)}
-        buttonStyle={styles.deleteButton}
-        disabled={loading}
-      />
     </View>
   );
 }

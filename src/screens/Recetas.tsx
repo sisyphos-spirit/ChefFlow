@@ -30,7 +30,7 @@ export default function Recetas() {
   };
 
   return (
-    <View style={{ padding: 20 }}>
+    <View style={{ flex: 1 }}>
       {user ? (
         <>
           {/* Formulario para crear una nueva receta */}
@@ -44,10 +44,13 @@ export default function Recetas() {
           {/* Lista de recetas */}
           <FlatList style={{ marginTop: 60 }}
             data={recetas}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item, index) => item.id || index.toString()} // Asegúrate de que la clave sea única
             renderItem={({ item }) => (
               <RecetaItem item={item} onDelete={deleteReceta} loading={loading} />
             )}
+            refreshing={loading} // Indica si está cargando
+            onRefresh={fetchRecetas} // Llama a la función para actualizar las recetas
+
           />
         </>
       ) : (
