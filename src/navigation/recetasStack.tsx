@@ -1,6 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import Recetas from '../screens/Recetas';
-import RecetaForm from '../components/RecetaForm';
+import Recetas from '../screens/recetas/Recetas';
+import RecetaForm from '../screens/recetas/RecetaForm';
 
 const Stack = createNativeStackNavigator();
 

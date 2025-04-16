@@ -1,18 +1,12 @@
-import { View, Text, Alert, FlatList, Pressable } from 'react-native'
-import { useUserStore } from '../store/useUserStore'
-import { supabase } from '../lib/supabase'
-import { useState, useEffect } from 'react'
-import { Input, Button } from '@rneui/themed'
-import Img_receta from '../components/Img_receta'
-import uuid from 'react-native-uuid';
-import RecetaItem from '../components/RecetaItem';
-import { useRecetas } from '../hooks/useRecetas'
-import RecetaForm from '../components/RecetaForm'
-import { Link, router } from 'expo-router'
-import { navigate } from 'expo-router/build/global-state/routing'
+import { View, Text, FlatList } from 'react-native'
+import { useUserStore } from '../../store/useUserStore'
+import { useEffect } from 'react'
+import { Button } from '@rneui/themed'
+import RecetaItem from '../../components/RecetaItem';
+import { useRecetas } from '../../hooks/useRecetas'
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/types';
+import { RootStackParamList } from '../../navigation/types';
 
 export default function Recetas() {
   type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'ListaRecetas'>;

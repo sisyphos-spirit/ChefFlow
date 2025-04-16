@@ -1,9 +1,8 @@
 import { View, StyleSheet, Alert } from 'react-native';
 import { Input, Button } from '@rneui/themed';
-import Img_receta from './Img_receta';
+import Img_receta from '../../components/Img_receta';
 import { useState } from 'react';
-import { useRecetas } from '../hooks/useRecetas';
-import { FlatList } from 'react-native-gesture-handler';
+import { useRecetas } from '../../hooks/useRecetas';
 
 
 export default function RecetaForm() {
