@@ -54,7 +54,7 @@ export default function Img_preview({ url, size = 150, onUpload }: Props) {
 
 const styles = StyleSheet.create({
   image: {
-    borderRadius: 5,
+    borderRadius: 25,
     overflow: 'hidden',
     maxWidth: '100%',
   },

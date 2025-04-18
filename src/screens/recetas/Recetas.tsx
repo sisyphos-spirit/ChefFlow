@@ -48,7 +48,7 @@ export default function Recetas() {
             data={recetas}
             keyExtractor={(item, index) => item.id || index.toString()} // Asegúrate de que la clave sea única
             renderItem={({ item }) => (
-              <Pressable onPress={() => goToView(item)}><RecetaItem item={item} onDelete={deleteReceta} loading={loading} /></Pressable>
+              <Pressable onPress={() => goToView(item)}><RecetaItem item={item} onDelete={deleteReceta} loading={loading}/></Pressable>
             )}
             refreshing={loading} // Indica si está cargando
             onRefresh={fetchRecetas} // Llama a la función para actualizar las recetas

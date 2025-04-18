@@ -21,13 +21,13 @@ export default function RecetaItem({ item, onDelete, loading }: {
 
   return (
     <View style={styles.container}>
-      <Text>{titulo}</Text>
-      <Img_preview size={200} url={recetaUrl} onUpload={setRecetaUrl} />
+      <Text style={styles.text}>{titulo}</Text>
+      <Img_preview size={285} url={recetaUrl} onUpload={setRecetaUrl} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { marginBottom: 20, padding: 10, borderWidth: 1, borderRadius: 5 },
-  deleteButton: { backgroundColor: 'red', marginTop: 10 },
+  container: { marginHorizontal: 30, marginVertical: 10, padding: 10, borderWidth: 1, borderRadius: 5, paddingBlock: 20 },
+  text: { fontSize: 20, fontWeight: 'bold', marginBottom: 10, textAlign: 'center' },
 });
