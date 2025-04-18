@@ -5,17 +5,17 @@ import { useState } from 'react';
 import { useRecetas } from '../../hooks/useRecetas';
 
 
-export default function RecetaForm() {
+export default function EditarRecetar() {
     const [newTitulo, setNewTitulo] = useState('');
     const [newDescripcion, setNewDescripcion] = useState('');
     const [newRecetaUrl, setNewRecetaUrl] = useState('');
     const [loading, setLoading] = useState(false);
-    const { createReceta } = useRecetas();
+    const { updateReceta, createReceta } = useRecetas();
 
     const onSubmit = async () => {
         try {
             setLoading(true);
-            await createReceta(newTitulo, newDescripcion, newRecetaUrl);
+            await createReceta( newTitulo, newDescripcion, newRecetaUrl);
             setNewTitulo('');
             setNewDescripcion('');
             setNewRecetaUrl('');

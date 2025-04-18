@@ -88,6 +88,27 @@ export function useRecetas() {
       setLoading(false)
     }
   }
+  
+  async function updateReceta(id: string, newTitulo: string, newDescripcion: string, newRecetaUrl: string) {
+    try {
+      setLoading(true)
+      const { error } = await supabase.from('recetas').update({
+        titulo: newTitulo,
+        descripcion: newDescripcion,
+        imagen_url: newRecetaUrl,
+      }).eq('id_receta', id)
 
-  return { recetas, loading, createReceta, deleteReceta, fetchRecetas };
+      if (error) throw error
+      Alert.alert('Éxito', 'Receta actualizada correctamente')
+      fetchRecetas() // Refrescar la lista
+    } catch (error) {
+      if (error instanceof Error) {
+        Alert.alert('Error', error.message)
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return { recetas, loading, createReceta, deleteReceta, fetchRecetas, updateReceta };
 }

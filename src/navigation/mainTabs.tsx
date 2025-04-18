@@ -1,7 +1,5 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Account from '../screens/Account';
-import Recetas from '../screens/recetas/Recetas';
-import RecetaForm from '../screens/recetas/RecetaForm';
 import RecetasStack from './recetasStack';
 
 const Tab = createBottomTabNavigator();

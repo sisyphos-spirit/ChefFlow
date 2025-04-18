@@ -1,6 +1,6 @@
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Text } from 'react-native';
 import { Input, Button } from '@rneui/themed';
-import Img_receta from './Img_receta';
+import Img_preview from './Img_preview';
 import { useState } from 'react';
 
 interface Receta {
@@ -21,9 +21,8 @@ export default function RecetaItem({ item, onDelete, loading }: {
 
   return (
     <View style={styles.container}>
-      <Input label="Título" value={titulo} onChangeText={setTitulo} />
-      <Input label="Descripción" value={descripcion} onChangeText={setDescripcion} />
-      <Img_receta size={200} url={recetaUrl} onUpload={setRecetaUrl} />
+      <Text>{titulo}</Text>
+      <Img_preview size={200} url={recetaUrl} onUpload={setRecetaUrl} />
     </View>
   );
 }

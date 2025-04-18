@@ -1,4 +1,4 @@
-import { View, Text, FlatList } from 'react-native'
+import { View, Text, FlatList, Pressable } from 'react-native'
 import { useUserStore } from '../../store/useUserStore'
 import { useEffect } from 'react'
 import { Button } from '@rneui/themed'
@@ -19,8 +19,16 @@ export default function Recetas() {
     if (user) fetchRecetas(); // Obtener recetas al cargar el componente
   }, [user])
 
+  const goToCreator = () => {
+    navigation.navigate('CrearReceta');
+  };
+
   const goToEditor = () => {
-    navigation.navigate('RecetaForm');
+    //navigation.navigate('EditarReceta');
+  };
+
+  const goToView = (item: any) => {
+    navigation.navigate('InfoReceta', { receta: item });
   };
 
   return (
@@ -31,7 +39,7 @@ export default function Recetas() {
           <View style={{ marginBottom: 20 }}>
             <Button
               title="Crear Receta"
-              onPress={() => { goToEditor() }}
+              onPress={() => { goToCreator() }}
               buttonStyle={{ backgroundColor: '#007BFF' }}></Button>
           </View>
 
@@ -40,7 +48,7 @@ export default function Recetas() {
             data={recetas}
             keyExtractor={(item, index) => item.id || index.toString()} // Asegúrate de que la clave sea única
             renderItem={({ item }) => (
-              <RecetaItem item={item} onDelete={deleteReceta} loading={loading} />
+              <Pressable onPress={() => goToView(item)}><RecetaItem item={item} onDelete={deleteReceta} loading={loading} /></Pressable>
             )}
             refreshing={loading} // Indica si está cargando
             onRefresh={fetchRecetas} // Llama a la función para actualizar las recetas
