@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Alert } from 'react-native';
-import RecetaItem from '../components/RecetaItem';
 import { useUserStore } from '../store/useUserStore';
 import uuid from 'react-native-uuid';
 
@@ -10,7 +9,8 @@ interface Receta {
     titulo: string
     descripcion: string
     imagen_url: string
-}
+    pasos: string[]
+};
 
 export function useRecetas() {
   const user = useUserStore((state) => state.user) // Obtener el usuario del store
@@ -43,7 +43,7 @@ export function useRecetas() {
     }
   }
 
-  async function createReceta(newTitulo: string, newDescripcion: string, newRecetaUrl: string) {
+  async function createReceta(newTitulo: string, newDescripcion: string, newRecetaUrl: string, pasos: string[]) {
     try {
       setLoading(true)
       if (!user) throw new Error('No user available!')
@@ -55,6 +55,7 @@ export function useRecetas() {
           titulo: newTitulo,
           descripcion: newDescripcion,
           imagen_url: newRecetaUrl, // URL de la imagen subida
+          pasos: pasos, // Pasos de la receta
           publicada: false, // Valor por defecto para la columna `publicada`
           fecha_creacion: new Date(), // Fecha de creación
         },

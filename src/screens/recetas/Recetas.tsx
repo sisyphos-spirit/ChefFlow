@@ -36,7 +36,7 @@ export default function Recetas() {
       {user ? (
         <>
           {/* Formulario para crear una nueva receta */}
-          <View style={{ marginBottom: 20 }}>
+          <View style={{ marginBottom: -35 }}>
             <Button
               title="Crear Receta"
               onPress={() => { goToCreator() }}
