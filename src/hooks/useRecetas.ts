@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { Alert } from 'react-native';
 import { useUserStore } from '../store/useUserStore';
 import uuid from 'react-native-uuid';
+import { Float } from 'react-native/Libraries/Types/CodegenTypes';
 
 interface Receta {
     id: string
@@ -43,14 +44,16 @@ export function useRecetas() {
     }
   }
 
-  async function createReceta(newTitulo: string, newDescripcion: string, newRecetaUrl: string, pasos: string[]) {
+  async function createReceta(newTitulo: string, newDescripcion: string, newRecetaUrl: string, pasos: string[], ingredientes: { id: string, nombre: string; cantidad: Float }[]) {
     try {
-      setLoading(true)
-      if (!user) throw new Error('No user available!')
+      setLoading(true);
+      if (!user) throw new Error('No user available!');
 
-      const { error } = await supabase.from('recetas').insert([
+      const receta_id = uuid.v4(); // Generar un ID único para la receta
+      
+      const { error: recetaError } = await supabase.from('recetas').insert([
         {
-          id_receta: uuid.v4(), // Generar un ID único para la receta
+          id_receta: receta_id, 
           id_usuario: user.id, // ID del usuario autenticado
           titulo: newTitulo,
           descripcion: newDescripcion,
@@ -59,17 +62,42 @@ export function useRecetas() {
           publicada: false, // Valor por defecto para la columna `publicada`
           fecha_creacion: new Date(), // Fecha de creación
         },
-      ])
+      ]);
 
-      if (error) throw error
-      Alert.alert('Éxito', 'Receta creada correctamente')
-      fetchRecetas() // Refrescar la lista
+      if (recetaError) {
+        console.error('Error al insertar la receta:', recetaError); // Log del error
+        throw recetaError;
+      }
+
+      console.log('Receta insertada correctamente'); // Log de éxito
+
+      const ingredientesData = ingredientes.map((ingrediente) => ({
+        id_receta: receta_id,
+        id_ingrediente: ingrediente.id, // ID del ingrediente
+        cantidad: ingrediente.cantidad,
+        created_at: new Date(),
+      }));
+
+      console.log('Datos de los ingredientes a insertar:', ingredientesData); // Log de los datos de ingredientes
+
+      const { error: ingredientesError } = await supabase.from('receta_ingredientes').insert(ingredientesData);
+
+      if (ingredientesError) {
+        console.error('Error al insertar los ingredientes:', ingredientesError); // Log del error
+        throw ingredientesError;
+      }
+
+      console.log('Ingredientes insertados correctamente'); // Log de éxito
+
+      Alert.alert('Éxito', 'Receta creada correctamente');
+      fetchRecetas(); // Refrescar la lista
     } catch (error) {
       if (error instanceof Error) {
-        Alert.alert('Error', error.message)
+        console.error('Error en createReceta:', error.message); // Log del error general
+        Alert.alert('Error', error.message);
       }
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 

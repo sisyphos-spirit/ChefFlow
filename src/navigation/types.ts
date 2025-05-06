@@ -4,6 +4,8 @@ interface Receta {
   titulo: string
   descripcion: string
   imagen_url: string
+  pasos: string[],
+  ingredientes: { nombre: string; cantidad: number; unidad: string }[]
 }
 
 export type RootStackParamList = {
