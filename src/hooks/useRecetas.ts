@@ -33,7 +33,7 @@ export function useRecetas() {
         .eq('id_usuario', user.id);
 
       if (error) throw error 
-      console.log('Fetched recetas:', data); // Debugging log
+      //console.log('Fetched recetas:', data); // Debugging log
       setRecetas(data || []);
     } catch (error) {
       if (error instanceof Error) {

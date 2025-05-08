@@ -10,6 +10,10 @@ export interface IngredienteBase {
 
 export interface Ingrediente extends IngredienteBase {
   cantidad: number;
+  calorias?: number;
+  proteinas?: number;
+  carbohidratos?: number;
+  grasas?: number;
 }
 
 export function useIngredientes() {
@@ -23,7 +27,7 @@ export function useIngredientes() {
         .from('ingredientes')
         .select('id, nombre, unidad');
 
-      console.log('fetchIngredientes data:', data); // Log para depuración
+      //console.log('fetchIngredientes data:', data); // Log para depuración
 
       if (error) {
         console.error('Error fetching ingredientes:', error);
@@ -51,7 +55,6 @@ export function useIngredientes() {
     try {
       setLoading(true);
 
-      // Primera consulta: Obtener cantidades e IDs de ingredientes desde receta_ingredientes
       const { data: recetaIngredientes, error: errorRecetaIngredientes } = await supabase
         .from('receta_ingredientes')
         .select('id_ingrediente, cantidad')
@@ -66,13 +69,11 @@ export function useIngredientes() {
         return [];
       }
 
-      // Obtener los IDs de los ingredientes
       const ingredienteIds = recetaIngredientes.map((item: any) => item.id_ingrediente);
 
-      // Segunda consulta: Obtener detalles de los ingredientes desde ingredientes
       const { data: ingredientes, error: errorIngredientes } = await supabase
         .from('ingredientes')
-        .select('id, nombre, unidad')
+        .select('id, nombre, unidad, kcal_100g, proteinas_100g, hidratos_100g, grasas_100g')
         .in('id', ingredienteIds);
 
       if (errorIngredientes) {
@@ -80,7 +81,6 @@ export function useIngredientes() {
         throw errorIngredientes;
       }
 
-      // Combinar los datos de ambas consultas
       const combinedData = recetaIngredientes.map((recetaIngrediente: any) => {
         const ingrediente = ingredientes?.find((ing: any) => ing.id === recetaIngrediente.id_ingrediente);
         return {
@@ -88,6 +88,10 @@ export function useIngredientes() {
           nombre: ingrediente?.nombre || 'Desconocido',
           unidad: ingrediente?.unidad || 'Desconocido',
           cantidad: recetaIngrediente.cantidad,
+          calorias: ingrediente?.kcal_100g || 0,
+          proteinas: ingrediente?.proteinas_100g || 0,
+          carbohidratos: ingrediente?.hidratos_100g || 0,
+          grasas: ingrediente?.grasas_100g || 0,
         };
       });
 
@@ -104,5 +108,41 @@ export function useIngredientes() {
     }
   }
 
-  return { ingredientes, loading, fetchIngredientes, fetchIngredientesReceta };
+  async function fetchConversionUnidades(): Promise<Record<string, number>> {
+    try {
+      const { data, error } = await supabase
+        .from('conversion_unidades')
+        .select('id_ingrediente, gramos_unidad');
+
+      if (error) {
+        console.error('Error fetching conversion_unidades:', error);
+        throw error;
+      }
+
+      const conversionMap: Record<string, number> = {};
+      data?.forEach((item: any) => {
+        conversionMap[item.id_ingrediente] = item.gramos_unidad;
+      });
+
+      return conversionMap;
+    } catch (error) {
+      if (error instanceof Error) {
+        Alert.alert('Error', error.message);
+      } else {
+        console.error('Unexpected error:', error);
+      }
+      return {};
+    }
+  }
+
+  function convertirUnidad(cantidad: number, idIngrediente: string, conversionMap: Record<string, number>): number {
+    const factor = conversionMap[idIngrediente];
+    if (!factor) {
+      console.warn(`No conversion factor found for ingrediente ID ${idIngrediente}`);
+      return cantidad;
+    }
+    return cantidad * factor;
+  }
+
+  return { ingredientes, loading, fetchIngredientes, fetchIngredientesReceta, fetchConversionUnidades, convertirUnidad };
 }
