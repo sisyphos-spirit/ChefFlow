@@ -12,23 +12,28 @@ export default function Recetas() {
   type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'ListaRecetas'>;
 
   const user = useUserStore((state) => state.user) // Obtener el usuario del store
-  const { recetas, fetchRecetas, deleteReceta, createReceta, loading } = useRecetas();
+  const { recetas, fetchRecetas, deleteReceta, loading } = useRecetas();
   const navigation = useNavigation<NavigationProp>(); // Obtener la navegación
 
   useEffect(() => {
     if (user) fetchRecetas(); // Obtener recetas al cargar el componente
-  }, [user])
+  }, [user]);
 
   const goToCreator = () => {
     navigation.navigate('CrearReceta');
   };
 
-  const goToEditor = () => {
-    //navigation.navigate('EditarReceta');
-  };
-
   const goToView = (item: any) => {
     navigation.navigate('InfoReceta', { receta: item });
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteReceta(id);
+      await fetchRecetas(); // Refrescar la lista tras eliminar
+    } catch (error) {
+      console.error('Error al eliminar la receta:', error);
+    }
   };
 
   return (
@@ -39,20 +44,23 @@ export default function Recetas() {
           <View style={{ marginBottom: -35 }}>
             <Button
               title="Crear Receta"
-              onPress={() => { goToCreator() }}
-              buttonStyle={{ backgroundColor: '#007BFF' }}></Button>
+              onPress={() => goToCreator()}
+              buttonStyle={{ backgroundColor: '#007BFF' }}
+            />
           </View>
 
           {/* Lista de recetas */}
-          <FlatList style={{ marginTop: 60 }}
-            data={recetas}
+          <FlatList
+            style={{ marginTop: 60 }}
+            data={recetas} // Usar directamente el estado global
             keyExtractor={(item, index) => item.id || index.toString()} // Asegúrate de que la clave sea única
             renderItem={({ item }) => (
-              <Pressable onPress={() => goToView(item)}><RecetaItem item={item} onDelete={deleteReceta} loading={loading}/></Pressable>
+              <Pressable onPress={() => goToView(item)}>
+                <RecetaItem item={item} />
+              </Pressable>
             )}
             refreshing={loading} // Indica si está cargando
             onRefresh={fetchRecetas} // Llama a la función para actualizar las recetas
-
           />
         </>
       ) : (

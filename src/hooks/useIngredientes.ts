@@ -55,6 +55,18 @@ export function useIngredientes() {
     try {
       setLoading(true);
 
+      // Verificar si la receta existe antes de buscar ingredientes
+      const { data: recetaExists, error: recetaError } = await supabase
+        .from('recetas')
+        .select('id_receta')
+        .eq('id_receta', recetaId)
+        .single();
+
+      if (recetaError || !recetaExists) {
+        console.warn(`La receta con ID ${recetaId} no existe o fue eliminada.`);
+        return [];
+      }
+
       const { data: recetaIngredientes, error: errorRecetaIngredientes } = await supabase
         .from('receta_ingredientes')
         .select('id_ingrediente, cantidad')
@@ -139,6 +151,7 @@ export function useIngredientes() {
     const factor = conversionMap[idIngrediente];
     if (!factor) {
       console.warn(`No conversion factor found for ingrediente ID ${idIngrediente}`);
+      // Retornar la cantidad original y registrar el warning para depuración
       return cantidad;
     }
     return cantidad * factor;

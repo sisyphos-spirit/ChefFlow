@@ -1,13 +1,17 @@
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { Text } from '@rneui/themed';
+import { Text, Button } from '@rneui/themed';
 import Img_preview from '../../components/Img_preview';
 import { useIngredientes } from '../../hooks/useIngredientes';
 import type { Ingrediente } from '../../hooks/useIngredientes';
 import { useState, useEffect } from 'react';
+import { useRecetas } from '../../hooks/useRecetas';
+import { useNavigation } from '@react-navigation/native';
 
 export default function InfoReceta({ route }: { route: any }) {
   const { receta } = route.params;
   const { fetchIngredientesReceta, fetchConversionUnidades, convertirUnidad } = useIngredientes();
+  const { deleteReceta } = useRecetas();
+  const navigation = useNavigation();
   const [ingredientes, setIngredientes] = useState<Ingrediente[]>([]);
   const [nutritionalTotals, setNutritionalTotals] = useState({
     calorias: 0,
@@ -19,35 +23,55 @@ export default function InfoReceta({ route }: { route: any }) {
   useEffect(() => {
     async function loadIngredientes() {
       if (receta && receta.id_receta) {
-        const fetchedIngredientes = await fetchIngredientesReceta(receta.id_receta);
-        const conversionMap = await fetchConversionUnidades();
+        try {
+          const fetchedIngredientes = await fetchIngredientesReceta(receta.id_receta);
+          const conversionMap = await fetchConversionUnidades();
 
-        // Convert quantities to grams and calculate nutritional totals
-        let totalCalorias = 0;
-        let totalProteinas = 0;
-        let totalCarbohidratos = 0;
-        let totalGrasas = 0;
+          // Convert quantities to grams and calculate nutritional totals
+          let totalCalorias = 0;
+          let totalProteinas = 0;
+          let totalCarbohidratos = 0;
+          let totalGrasas = 0;
 
-        const convertedIngredientes = fetchedIngredientes.map((ing) => {
-          const cantidadEnGramos = ing.unidad === 'g' ? ing.cantidad : convertirUnidad(ing.cantidad, ing.id, conversionMap);
-          totalCalorias += (ing.calorias || 0) * (cantidadEnGramos / 100);
-          totalProteinas += (ing.proteinas || 0) * (cantidadEnGramos / 100);
-          totalCarbohidratos += (ing.carbohidratos || 0) * (cantidadEnGramos / 100);
-          totalGrasas += (ing.grasas || 0) * (cantidadEnGramos / 100);
-          return { ...ing, cantidad: cantidadEnGramos, unidad: 'g' };
-        });
+          const convertedIngredientes = fetchedIngredientes.map((ing) => {
+            const cantidadEnGramos = ing.unidad === 'g' ? ing.cantidad : convertirUnidad(ing.cantidad, ing.id, conversionMap);
+            totalCalorias += (ing.calorias || 0) * (cantidadEnGramos / 100);
+            totalProteinas += (ing.proteinas || 0) * (cantidadEnGramos / 100);
+            totalCarbohidratos += (ing.carbohidratos || 0) * (cantidadEnGramos / 100);
+            totalGrasas += (ing.grasas || 0) * (cantidadEnGramos / 100);
+            return { ...ing, cantidad: cantidadEnGramos, unidad: 'g' };
+          });
 
-        setIngredientes(convertedIngredientes);
-        setNutritionalTotals({
-          calorias: totalCalorias,
-          proteinas: totalProteinas,
-          carbohidratos: totalCarbohidratos,
-          grasas: totalGrasas,
-        });
+          setIngredientes(convertedIngredientes);
+          setNutritionalTotals({
+            calorias: totalCalorias,
+            proteinas: totalProteinas,
+            carbohidratos: totalCarbohidratos,
+            grasas: totalGrasas,
+          });
+        } catch (error) {
+          console.error('Error al cargar los ingredientes:', error);
+        }
       }
     }
-    loadIngredientes();
+
+    if (receta) {
+      loadIngredientes();
+    } else {
+      console.warn('La receta no existe o fue eliminada.');
+    }
   }, [receta]);
+
+  const handleDelete = async () => {
+    try {
+      if (receta && receta.id_receta) {
+        await deleteReceta(receta.id_receta);
+        navigation.goBack(); // Redirige a la pantalla anterior
+      }
+    } catch (error) {
+      alert(`Error al eliminar la receta`);
+    }
+  };
 
   if (!receta) {
     return (
@@ -94,6 +118,12 @@ export default function InfoReceta({ route }: { route: any }) {
         ) : (
           <Text>No hay pasos disponibles.</Text>
         )}
+
+        <Button
+          title="Eliminar Receta"
+          onPress={handleDelete}
+          buttonStyle={{ backgroundColor: 'red', marginTop: 20 }}
+        />
       </View>
     </ScrollView>
   );

@@ -21,12 +21,12 @@ export default function CrearReceta() {
   const { ingredientes, loading: loadingIngredientes, fetchIngredientes } = useIngredientes();
 
   useEffect(() => {
-    console.log('Fetching ingredientes...'); // Log para depuración
+    console.log('Fetching ingredientes'); // Log para depuración
     fetchIngredientes();
   }, []);
 
   useEffect(() => {
-    console.log('Ingredientes for Dropdown:', ingredientes); // Log para depuración
+    //console.log('Ingredientes for Dropdown:', ingredientes); // Log para depuración
   }, [ingredientes]);
 
   const addIngrediente = () => {
