@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { StyleSheet, View, Alert, Image, Button } from 'react-native'
+import { StyleSheet, View, Alert, Image, Text, TouchableOpacity } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 
 interface Props {
@@ -100,11 +100,20 @@ export default function Img_receta({ url, size = 150, onUpload }: Props) {
         <View style={[imageSize, styles.image, styles.noImage]} />
       )}
       <View>
-        <Button
-          title={uploading ? 'Subiendo...' : 'Subir Imagen'}
+        <TouchableOpacity
           onPress={uploadImage}
           disabled={uploading}
-        />
+          style={{
+            backgroundColor: uploading ? '#ccc' : '#007BFF',
+            padding: 10,
+            borderRadius: 5,
+            alignItems: 'center',
+          }}
+        >
+          <Text style={{ color: '#fff', fontWeight: 'bold' }}>
+            {uploading ? 'Subiendo...' : 'Subir Imagen'}
+          </Text>
+        </TouchableOpacity>
       </View>
     </View>
   )
