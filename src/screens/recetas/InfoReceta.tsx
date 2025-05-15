@@ -6,12 +6,14 @@ import type { Ingrediente } from '../../hooks/useIngredientes';
 import { useState, useEffect } from 'react';
 import { useRecetas } from '../../hooks/useRecetas';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../navigation/types';
 
 export default function InfoReceta({ route }: { route: any }) {
   const { receta } = route.params;
   const { fetchIngredientesReceta, fetchConversionUnidades, convertirUnidad } = useIngredientes();
   const { deleteReceta } = useRecetas();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [ingredientes, setIngredientes] = useState<Ingrediente[]>([]);
   const [nutritionalTotals, setNutritionalTotals] = useState({
     calorias: 0,
@@ -73,6 +75,10 @@ export default function InfoReceta({ route }: { route: any }) {
     }
   };
 
+  const handleEdit = () => {
+    navigation.navigate('EditarReceta', { receta });
+  };
+
   if (!receta) {
     return (
       <View style={styles.container}>
@@ -118,6 +124,12 @@ export default function InfoReceta({ route }: { route: any }) {
         ) : (
           <Text>No hay pasos disponibles.</Text>
         )}
+
+        <Button
+          title="Editar Receta"
+          onPress={handleEdit}
+          buttonStyle={{ backgroundColor: 'blue', marginTop: 20 }}
+        />
 
         <Button
           title="Eliminar Receta"

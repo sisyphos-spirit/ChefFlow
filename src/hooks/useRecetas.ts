@@ -120,18 +120,38 @@ export function useRecetas() {
     }
   }
   
-  async function updateReceta(id: string, newTitulo: string, newDescripcion: string, newRecetaUrl: string) {
+  async function updateReceta(id: string, newTitulo: string, newDescripcion: string, newRecetaUrl: string, pasos: string[], ingredientes: { id: string, nombre: string; cantidad: number; unidad: string }[]) {
     try {
       setLoading(true);
-      const { error } = await supabase.from('recetas').update({
+
+      // Actualizar los datos principales de la receta
+      const { error: recetaError } = await supabase.from('recetas').update({
         titulo: newTitulo,
         descripcion: newDescripcion,
         imagen_url: newRecetaUrl,
+        pasos: pasos,
       }).eq('id_receta', id);
 
-      if (error) throw error;
+      if (recetaError) throw recetaError;
+
+      // Eliminar ingredientes antiguos
+      const { error: deleteError } = await supabase.from('receta_ingredientes').delete().eq('id_receta', id);
+      if (deleteError) throw deleteError;
+
+      // Insertar los nuevos ingredientes
+      const ingredientesData = ingredientes.map((ingrediente) => ({
+        id_receta: id,
+        id_ingrediente: ingrediente.id,
+        cantidad: ingrediente.cantidad,
+        created_at: new Date(),
+      }));
+      if (ingredientesData.length > 0) {
+        const { error: insertError } = await supabase.from('receta_ingredientes').insert(ingredientesData);
+        if (insertError) throw insertError;
+      }
+
       Alert.alert('Éxito', 'Receta actualizada correctamente');
-      fetchRecetas(); // Refrescar la lista
+      fetchRecetas();
     } catch (error) {
       if (error instanceof Error) {
         Alert.alert('Error', error.message);
