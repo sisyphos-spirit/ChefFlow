@@ -161,5 +161,45 @@ export function useRecetas() {
     }
   }
 
-  return { recetas, loading, createReceta, deleteReceta, fetchRecetas, updateReceta };
+  async function togglePublicarReceta(id_receta: string, publicar: boolean) {
+    try {
+      setLoading(true);
+      const { error } = await supabase
+        .from('recetas')
+        .update({ publicada: publicar })
+        .eq('id_receta', id_receta);
+      if (error) throw error;
+      // Opcional: refrescar recetas si es necesario
+      await fetchRecetas();
+      return publicar;
+    } catch (error) {
+      if (error instanceof Error) {
+        Alert.alert('Error', error.message);
+      }
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Obtener todas las recetas públicas
+  async function fetchRecetasPublicas() {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('recetas')
+        .select('*')
+        .eq('publicada', true);
+      if (error) throw error;
+      setRecetas(data || []);
+    } catch (error) {
+      if (error instanceof Error) {
+        Alert.alert('Error', error.message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return { recetas, loading, createReceta, deleteReceta, fetchRecetas, updateReceta, togglePublicarReceta, fetchRecetasPublicas };
 }

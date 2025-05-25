@@ -1,4 +1,4 @@
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Text, Button } from '@rneui/themed';
 import Img_preview from '../../components/Img_preview';
 import { useIngredientes } from '../../hooks/useIngredientes';
@@ -8,12 +8,15 @@ import { useRecetas } from '../../hooks/useRecetas';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/types';
+import { useUserStore } from '../../store/useUserStore';
+import { Icon } from '@rneui/themed';
 
 export default function InfoReceta({ route }: { route: any }) {
   const { receta } = route.params;
   const { fetchIngredientesReceta, fetchConversionUnidades, convertirUnidad } = useIngredientes();
-  const { deleteReceta } = useRecetas();
+  const { deleteReceta, togglePublicarReceta } = useRecetas();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const user = useUserStore((state) => state.user);
   const [ingredientes, setIngredientes] = useState<Ingrediente[]>([]);
   const [nutritionalTotals, setNutritionalTotals] = useState({
     calorias: 0,
@@ -21,6 +24,9 @@ export default function InfoReceta({ route }: { route: any }) {
     carbohidratos: 0,
     grasas: 0,
   });
+  const [publicando, setPublicando] = useState(false);
+  const [publicada, setPublicada] = useState(receta.publicada);
+  const esDueno = user && (receta.id_usuario === user.id);
 
   useEffect(() => {
     async function loadIngredientes() {
@@ -29,22 +35,21 @@ export default function InfoReceta({ route }: { route: any }) {
           const fetchedIngredientes = await fetchIngredientesReceta(receta.id_receta);
           const conversionMap = await fetchConversionUnidades();
 
-          // Convert quantities to grams and calculate nutritional totals
+          // Calcular valores nutricionales usando cantidades en gramos, pero guardar ingredientes con su unidad original
           let totalCalorias = 0;
           let totalProteinas = 0;
           let totalCarbohidratos = 0;
           let totalGrasas = 0;
 
-          const convertedIngredientes = fetchedIngredientes.map((ing) => {
+          fetchedIngredientes.forEach((ing) => {
             const cantidadEnGramos = ing.unidad === 'g' ? ing.cantidad : convertirUnidad(ing.cantidad, ing.id, conversionMap);
             totalCalorias += (ing.calorias || 0) * (cantidadEnGramos / 100);
             totalProteinas += (ing.proteinas || 0) * (cantidadEnGramos / 100);
             totalCarbohidratos += (ing.carbohidratos || 0) * (cantidadEnGramos / 100);
             totalGrasas += (ing.grasas || 0) * (cantidadEnGramos / 100);
-            return { ...ing, cantidad: cantidadEnGramos, unidad: 'g' };
           });
 
-          setIngredientes(convertedIngredientes);
+          setIngredientes(fetchedIngredientes); // Guardar ingredientes con unidad original
           setNutritionalTotals({
             calorias: totalCalorias,
             proteinas: totalProteinas,
@@ -65,18 +70,38 @@ export default function InfoReceta({ route }: { route: any }) {
   }, [receta]);
 
   const handleDelete = async () => {
-    try {
-      if (receta && receta.id_receta) {
-        await deleteReceta(receta.id_receta);
-        navigation.goBack(); // Redirige a la pantalla anterior
-      }
-    } catch (error) {
-      alert(`Error al eliminar la receta`);
-    }
+    Alert.alert(
+      'Confirmar eliminación',
+      '¿Estás seguro de que deseas eliminar esta receta?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              if (receta && receta.id_receta) {
+                await deleteReceta(receta.id_receta);
+                navigation.goBack(); // Redirige a la pantalla anterior
+              }
+            } catch (error) {
+              alert(`Error al eliminar la receta`);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const handleEdit = () => {
     navigation.navigate('EditarReceta', { receta });
+  };
+
+  const handleTogglePublicar = async () => {
+    setPublicando(true);
+    const nuevoEstado = await togglePublicarReceta(receta.id_receta, !publicada);
+    if (nuevoEstado !== null) setPublicada(nuevoEstado);
+    setPublicando(false);
   };
 
   if (!receta) {
@@ -92,7 +117,25 @@ export default function InfoReceta({ route }: { route: any }) {
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
-        <Text style={styles.titulo}>{receta.titulo}</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text style={styles.titulo}>{receta.titulo}</Text>
+          {esDueno && (
+            <Button
+              type="clear"
+              onPress={handleTogglePublicar}
+              loading={publicando}
+              icon={
+                <Icon
+                  name={publicada ? 'lock-open' : 'lock'}
+                  type="material"
+                  color={publicada ? 'green' : 'grey'}
+                  size={28}
+                />
+              }
+              accessibilityLabel={publicada ? 'Hacer privada' : 'Hacer pública'}
+            />
+          )}
+        </View>
         <Text>{receta.descripcion}</Text>
 
         <Text style={styles.sectionTitle}>Valores nutricionales:</Text>
@@ -125,17 +168,21 @@ export default function InfoReceta({ route }: { route: any }) {
           <Text>No hay pasos disponibles.</Text>
         )}
 
-        <Button
-          title="Editar Receta"
-          onPress={handleEdit}
-          buttonStyle={{ backgroundColor: 'blue', marginTop: 20 }}
-        />
+        {esDueno && (
+          <>
+            <Button
+              title="Editar Receta"
+              onPress={handleEdit}
+              buttonStyle={{ backgroundColor: 'blue', marginTop: 20 }}
+            />
 
-        <Button
-          title="Eliminar Receta"
-          onPress={handleDelete}
-          buttonStyle={{ backgroundColor: 'red', marginTop: 20 }}
-        />
+            <Button
+              title="Eliminar Receta"
+              onPress={handleDelete}
+              buttonStyle={{ backgroundColor: 'red', marginTop: 20 }}
+            />
+          </>
+        )}
       </View>
     </ScrollView>
   );

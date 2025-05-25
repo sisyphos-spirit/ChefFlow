@@ -1,6 +1,6 @@
-import { View, Text, FlatList, Pressable } from 'react-native'
+import { View, Text, FlatList, Pressable, TextInput } from 'react-native'
 import { useUserStore } from '../../store/useUserStore'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '@rneui/themed'
 import RecetaItem from '../../components/RecetaItem';
 import { useRecetas } from '../../hooks/useRecetas'
@@ -14,6 +14,7 @@ export default function Recetas() {
   const user = useUserStore((state) => state.user) // Obtener el usuario del store
   const { recetas, fetchRecetas, deleteReceta, loading } = useRecetas();
   const navigation = useNavigation<NavigationProp>(); // Obtener la navegación
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     if (user) fetchRecetas(); // Obtener recetas al cargar el componente
@@ -36,10 +37,42 @@ export default function Recetas() {
     }
   };
 
+  // Filtrar recetas según el término de búsqueda
+  const filteredRecetas = recetas.filter((receta) => {
+    if (!searchTerm) return true;
+    const lower = searchTerm.toLowerCase();
+    return (
+      receta.titulo?.toLowerCase().includes(lower) ||
+      receta.descripcion?.toLowerCase().includes(lower)
+    );
+  });
+
   return (
     <View style={{ flex: 1 }}>
       {user ? (
         <>
+          {/* Buscador de recetas */}
+          <View style={{ marginHorizontal: 20, marginTop: 20, marginBottom: 10 }}>
+            <TextInput
+              placeholder="Buscar receta..."
+              value={searchTerm}
+              onChangeText={setSearchTerm}
+              style={{
+                backgroundColor: '#fff',
+                borderRadius: 8,
+                borderWidth: 1,
+                borderColor: '#ccc',
+                paddingHorizontal: 15,
+                paddingVertical: 10,
+                fontSize: 16,
+                elevation: 2,
+              }}
+              clearButtonMode="while-editing"
+              autoCorrect={false}
+              autoCapitalize="none"
+              returnKeyType="search"
+            />
+          </View>
           {/* Formulario para crear una nueva receta */}
           <View style={{ marginBottom: -35 }}>
             <Button
@@ -50,18 +83,24 @@ export default function Recetas() {
           </View>
 
           {/* Lista de recetas */}
-          <FlatList
-            style={{ marginTop: 60 }}
-            data={recetas} // Usar directamente el estado global
-            keyExtractor={(item, index) => item.id || index.toString()} // Asegúrate de que la clave sea única
-            renderItem={({ item }) => (
-              <Pressable onPress={() => goToView(item)}>
-                <RecetaItem item={item} />
-              </Pressable>
-            )}
-            refreshing={loading} // Indica si está cargando
-            onRefresh={fetchRecetas} // Llama a la función para actualizar las recetas
-          />
+          {filteredRecetas.length === 0 ? (
+            <Text style={{ textAlign: 'center', marginTop: 40, color: '#888', fontSize: 16 }}>
+              No se encontraron recetas
+            </Text>
+          ) : (
+            <FlatList
+              style={{ marginTop: 60 }}
+              data={filteredRecetas} // Usar recetas filtradas
+              keyExtractor={(item, index) => item.id || index.toString()} // Asegúrate de que la clave sea única
+              renderItem={({ item }) => (
+                <Pressable onPress={() => goToView(item)}>
+                  <RecetaItem item={item} />
+                </Pressable>
+              )}
+              refreshing={loading} // Indica si está cargando
+              onRefresh={fetchRecetas} // Llama a la función para actualizar las recetas
+            />
+          )}
         </>
       ) : (
         <Text>Por favor, inicia sesión</Text>

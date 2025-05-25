@@ -8,7 +8,7 @@ import Avatar from '../components/Avatar'
 export default function Account() {
   const user = useUserStore((state) => state.user) // Obtener el usuario del store
   const [loading, setLoading] = useState(true)
-  const [username, setUsername] = useState('')
+  const [full_name, setFull_name] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
 
   useEffect(() => {
@@ -21,8 +21,8 @@ export default function Account() {
       if (!user) throw new Error('No user available!')
 
       const { data, error, status } = await supabase
-        .from('usuarios')
-        .select(`username, avatar_url`)
+        .from('profiles')
+        .select(`full_name, avatar_url`)
         .eq('id', user.id)
         .single()
       if (error && status !== 406) {
@@ -30,7 +30,7 @@ export default function Account() {
       }
 
       if (data) {
-        setUsername(data.username)
+        setFull_name(data.full_name)
         setAvatarUrl(data.avatar_url)
       }
     } catch (error) {
@@ -43,10 +43,10 @@ export default function Account() {
   }
 
   async function updateProfile({
-    username,
+    full_name,
     avatar_url,
   }: {
-    username: string
+    full_name: string
     avatar_url: string
   }) {
     try {
@@ -55,12 +55,12 @@ export default function Account() {
 
       const updates = {
         id: user.id,
-        username,
+        full_name,
         avatar_url,
         updated_at: new Date(),
       }
 
-      const { error } = await supabase.from('usuarios').upsert(updates)
+      const { error } = await supabase.from('profiles').upsert(updates)
 
       if (error) {
         throw error
@@ -80,7 +80,7 @@ export default function Account() {
         <Input label="Email" value={user?.email} disabled />
       </View>
       <View style={styles.verticallySpaced}>
-        <Input label="Username" value={username || ''} onChangeText={(text) => setUsername(text)} />
+        <Input label="Username" value={full_name || ''} onChangeText={(text) => setFull_name(text)} />
       </View>
 
       <View>
@@ -89,15 +89,15 @@ export default function Account() {
           url={avatarUrl}
           onUpload={(url: string) => {
             setAvatarUrl(url)
-            updateProfile({ username, avatar_url: url })
+            updateProfile({ full_name, avatar_url: url })
           }}
         />
     </View>
 
       <View style={[styles.verticallySpaced, styles.mt20]}>
         <Button
-          title={loading ? 'Loading ...' : 'Update'}
-          onPress={() => updateProfile({ username, avatar_url: avatarUrl })}
+          title={loading ? 'Cargando ...' : 'Actualizar perfil'}
+          onPress={() => updateProfile({ full_name, avatar_url: avatarUrl })}
           disabled={loading}
         />
       </View>
