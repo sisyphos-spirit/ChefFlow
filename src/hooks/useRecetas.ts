@@ -11,6 +11,7 @@ interface Receta {
     descripcion: string
     imagen_url: string
     pasos: string[];
+    ingredientes: { nombre: string; cantidad: number; unidad: string }[];
 };
 
 export function useRecetas() {
@@ -33,7 +34,36 @@ export function useRecetas() {
         .eq('id_usuario', user.id);
 
       if (error) throw error;
-      setRecetas(data || []);
+      const recetasWithIngredientes = await Promise.all(
+        (data || []).map(async (receta: any) => {
+          // Obtener ingredientes de la receta
+          const { data: recetaIngredientes, error: errorRecIng } = await supabase
+            .from('receta_ingredientes')
+            .select('id_ingrediente, cantidad')
+            .eq('id_receta', receta.id_receta);
+          if (errorRecIng) throw errorRecIng;
+          let ingredientes: any[] = [];
+          if (recetaIngredientes && recetaIngredientes.length > 0) {
+            const ingredienteIds = recetaIngredientes.map((item: any) => item.id_ingrediente);
+            const { data: ingredientesData, error: errorIng } = await supabase
+              .from('ingredientes')
+              .select('id, nombre, unidad')
+              .in('id', ingredienteIds);
+            if (errorIng) throw errorIng;
+            ingredientes = recetaIngredientes.map((ri: any) => {
+              const ing = ingredientesData?.find((i: any) => i.id === ri.id_ingrediente);
+              return {
+                id: ri.id_ingrediente,
+                nombre: ing?.nombre || 'Desconocido',
+                unidad: ing?.unidad || 'Desconocido',
+                cantidad: ri.cantidad,
+              };
+            });
+          }
+          return { ...receta, ingredientes };
+        })
+      );
+      setRecetas(recetasWithIngredientes);
     } catch (error) {
       if (error instanceof Error) {
         Alert.alert('Error', error.message);
@@ -191,7 +221,36 @@ export function useRecetas() {
         .select('*')
         .eq('publicada', true);
       if (error) throw error;
-      setRecetas(data || []);
+      const recetasWithIngredientes = await Promise.all(
+        (data || []).map(async (receta: any) => {
+          // Obtener ingredientes de la receta
+          const { data: recetaIngredientes, error: errorRecIng } = await supabase
+            .from('receta_ingredientes')
+            .select('id_ingrediente, cantidad')
+            .eq('id_receta', receta.id_receta);
+          if (errorRecIng) throw errorRecIng;
+          let ingredientes: any[] = [];
+          if (recetaIngredientes && recetaIngredientes.length > 0) {
+            const ingredienteIds = recetaIngredientes.map((item: any) => item.id_ingrediente);
+            const { data: ingredientesData, error: errorIng } = await supabase
+              .from('ingredientes')
+              .select('id, nombre, unidad')
+              .in('id', ingredienteIds);
+            if (errorIng) throw errorIng;
+            ingredientes = recetaIngredientes.map((ri: any) => {
+              const ing = ingredientesData?.find((i: any) => i.id === ri.id_ingrediente);
+              return {
+                id: ri.id_ingrediente,
+                nombre: ing?.nombre || 'Desconocido',
+                unidad: ing?.unidad || 'Desconocido',
+                cantidad: ri.cantidad,
+              };
+            });
+          }
+          return { ...receta, ingredientes };
+        })
+      );
+      setRecetas(recetasWithIngredientes);
     } catch (error) {
       if (error instanceof Error) {
         Alert.alert('Error', error.message);

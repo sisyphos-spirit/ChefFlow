@@ -41,10 +41,13 @@ export default function Recetas() {
   const filteredRecetas = recetas.filter((receta) => {
     if (!searchTerm) return true;
     const lower = searchTerm.toLowerCase();
-    return (
-      receta.titulo?.toLowerCase().includes(lower) ||
-      receta.descripcion?.toLowerCase().includes(lower)
-    );
+    // Buscar por título, descripción o nombre de ingrediente
+    const matchTitulo = receta.titulo?.toLowerCase().includes(lower);
+    const matchDescripcion = receta.descripcion?.toLowerCase().includes(lower);
+    const matchIngrediente = Array.isArray(receta.ingredientes)
+      ? receta.ingredientes.some((ing: any) => ing.nombre?.toLowerCase().includes(lower))
+      : false;
+    return matchTitulo || matchDescripcion || matchIngrediente;
   });
 
   return (

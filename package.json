@@ -19,12 +19,14 @@
     "@rneui/themed": "^4.0.0-rc.8",
     "@supabase/supabase-js": "^2.49.4",
     "expo": "52",
+    "expo-clipboard": "^7.1.4",
     "expo-image-picker": "~16.0.6",
     "expo-router": "^4.0.20",
     "expo-status-bar": "~2.0.1",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-native": "0.76.9",
+    "react-native-dropdown-picker": "^5.4.6",
     "react-native-element-dropdown": "^2.12.4",
     "react-native-gesture-handler": "~2.20.2",
     "react-native-pager-view": "6.5.1",
@@ -34,8 +36,7 @@
     "react-native-uuid": "^2.0.3",
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "~0.19.13",
-    "zustand": "^5.0.3",
-    "react-native-dropdown-picker": "^5.4.6"
+    "zustand": "^5.0.3"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/types';
 import { useRecetas } from '../../hooks/useRecetas';
 import RecetaItem from '../../components/RecetaItem';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function Explorar() {
   const navigation = useNavigation();
@@ -17,10 +18,13 @@ export default function Explorar() {
   const filteredRecetas = recetas.filter((receta) => {
     if (!searchTerm) return true;
     const lower = searchTerm.toLowerCase();
-    return (
-      receta.titulo?.toLowerCase().includes(lower) ||
-      receta.descripcion?.toLowerCase().includes(lower)
-    );
+    // Buscar por título, descripción o nombre de ingrediente
+    const matchTitulo = receta.titulo?.toLowerCase().includes(lower);
+    const matchDescripcion = receta.descripcion?.toLowerCase().includes(lower);
+    const matchIngrediente = Array.isArray(receta.ingredientes)
+      ? receta.ingredientes.some((ing: any) => ing.nombre?.toLowerCase().includes(lower))
+      : false;
+    return matchTitulo || matchDescripcion || matchIngrediente;
   });
 
   // Navegación a InfoReceta dentro del stack de Explorar
@@ -31,12 +35,21 @@ export default function Explorar() {
   return (
     <View style={{ flex: 1 }}>
       <View style={{ marginHorizontal: 20, marginTop: 20, marginBottom: 10 }}>
-        <TextInput
-          placeholder="Buscar receta..."
-          value={searchTerm}
-          onChangeText={setSearchTerm}
-          style={styles.input}
-        />
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <TextInput
+            placeholder="Buscar receta..."
+            value={searchTerm}
+            onChangeText={setSearchTerm}
+            style={[styles.input, { flex: 1 }]}
+          />
+          <Pressable
+            onPress={() => (navigation as any).navigate('BuscarPorId')}
+            style={{ marginLeft: 10, backgroundColor: '#eee', borderRadius: 8, padding: 10 }}
+            accessibilityLabel="Buscar por ID"
+          >
+            <Ionicons name="search" size={22} color="#333" />
+          </Pressable>
+        </View>
       </View>
       {filteredRecetas.length === 0 ? (
         <Text style={{ textAlign: 'center', marginTop: 40, color: '#888', fontSize: 16 }}>

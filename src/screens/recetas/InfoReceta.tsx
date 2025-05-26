@@ -10,6 +10,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/types';
 import { useUserStore } from '../../store/useUserStore';
 import { Icon } from '@rneui/themed';
+import * as Clipboard from 'expo-clipboard';
 
 export default function InfoReceta({ route }: { route: any }) {
   const { receta } = route.params;
@@ -98,10 +99,31 @@ export default function InfoReceta({ route }: { route: any }) {
   };
 
   const handleTogglePublicar = async () => {
-    setPublicando(true);
-    const nuevoEstado = await togglePublicarReceta(receta.id_receta, !publicada);
-    if (nuevoEstado !== null) setPublicada(nuevoEstado);
-    setPublicando(false);
+    if (!publicada) {
+      // Si va a hacer pública una receta privada, mostrar advertencia
+      Alert.alert(
+        'Advertencia',
+        'Estás a punto de hacer pública esta receta. Cualquier usuario podrá verla y copiar su ID. ¿Deseas continuar?',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          {
+            text: 'Sí, hacer pública',
+            style: 'default',
+            onPress: async () => {
+              setPublicando(true);
+              const nuevoEstado = await togglePublicarReceta(receta.id_receta, true);
+              if (nuevoEstado !== null) setPublicada(nuevoEstado);
+              setPublicando(false);
+            },
+          },
+        ]
+      );
+    } else {
+      setPublicando(true);
+      const nuevoEstado = await togglePublicarReceta(receta.id_receta, false);
+      if (nuevoEstado !== null) setPublicada(nuevoEstado);
+      setPublicando(false);
+    }
   };
 
   if (!receta) {
@@ -168,6 +190,24 @@ export default function InfoReceta({ route }: { route: any }) {
           <Text>No hay pasos disponibles.</Text>
         )}
 
+        {/* Botón para copiar el ID de la receta: visible para todos si es pública, o para el dueño si es privada */}
+        {((receta.publicada === true) || esDueno) && (
+          <Button
+            title="Copiar ID de receta"
+            onPress={async () => {
+              await Clipboard.setStringAsync(receta.id_receta || receta.id || '');
+              if (!receta.publicada && esDueno) {
+                Alert.alert(
+                  'Precaución al compartir',
+                  'Estás a punto de compartir el ID de una receta privada. Solo comparte este ID con personas de confianza, ya que cualquiera con el ID podrá ver tu receta.'
+                );
+              } else {
+                Alert.alert('ID copiado', 'El ID de la receta se ha copiado al portapapeles.');
+              }
+            }}
+            buttonStyle={{ backgroundColor: '#888', marginTop: 10 }}
+          />
+        )}
         {esDueno && (
           <>
             <Button
