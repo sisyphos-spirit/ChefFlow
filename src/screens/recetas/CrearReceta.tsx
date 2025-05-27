@@ -1,110 +1,120 @@
 import { useState, useEffect } from 'react';
-import { View, StyleSheet, Alert, Text, Pressable, Modal, TextInput, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, StyleSheet, Text, Pressable, Modal, TextInput, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { Input, Button } from '@rneui/themed';
 import Img_receta from '../../components/Img_receta';
 import { useRecetas } from '../../hooks/useRecetas';
-import { useIngredientes, IngredienteBase } from '../../hooks/useIngredientes';
+import { useIngredientes } from '../../hooks/useIngredientes';
+import type { IngredienteBase } from '../../navigation/types';
 import DropDownPicker from 'react-native-dropdown-picker';
+import { isEmpty, isPositiveNumber } from '../../utils/validation';
+import { showError } from '../../utils/alerts';
+import { useLanguageStore } from '../../store/useLanguageStore';
+import { messages } from '../../constants/messages';
 
-export default function CrearReceta() {
-  const [newTitulo, setNewTitulo] = useState('');
-  const [newDescripcion, setNewDescripcion] = useState('');
-  const [newRecetaUrl, setNewRecetaUrl] = useState('');
-  const [pasos, setPasos] = useState<string[]>([]);
+export default function CreateRecipe() {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [steps, setSteps] = useState<string[]>([]);
   const [inputHeights, setInputHeights] = useState<number[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedIngredient, setSelectedIngredient] = useState<{ id: string; nombre: string; unidad: string } | null>(null);
-  const [cantidad, setCantidad] = useState<string>('');
-  const [ingredientesSeleccionados, setIngredientesSeleccionados] = useState<{ id: string; nombre: string; cantidad: number; unidad: string }[]>([]);
+  const [selectedIngredient, setSelectedIngredient] = useState<IngredienteBase | null>(null);
+  const [amount, setAmount] = useState<string>('');
+  const [selectedIngredients, setSelectedIngredients] = useState<{ id: string; nombre: string; cantidad: number; unidad: string }[]>([]);
   const [openDropdown, setOpenDropdown] = useState(false);
   const [searchValue, setSearchValue] = useState('');
-  const [filteredIngredientes, setFilteredIngredientes] = useState<IngredienteBase[]>([]);
+  const [filteredIngredients, setFilteredIngredients] = useState<IngredienteBase[]>([]);
 
-  const { createReceta } = useRecetas();
-  const { ingredientes, loading: loadingIngredientes, fetchIngredientes } = useIngredientes();
+  const { createReceta: createRecipe } = useRecetas();
+  const { ingredientes: ingredients, loading: loadingIngredients, fetchIngredientes: fetchIngredients } = useIngredientes();
+  const language = useLanguageStore((state) => state.language);
+  const t = messages[language];
 
   useEffect(() => {
-    console.log('Fetching ingredientes'); // Log para depuración
-    fetchIngredientes();
+    fetchIngredients();
   }, []);
 
   useEffect(() => {
-    setFilteredIngredientes(
-      ingredientes.filter((ing) =>
+    setFilteredIngredients(
+      ingredients.filter((ing) =>
         ing.nombre.toLowerCase().includes(searchValue.toLowerCase())
       )
     );
-  }, [searchValue, ingredientes]);
+  }, [searchValue, ingredients]);
 
-  const addIngrediente = () => {
-    if (!selectedIngredient || !cantidad || parseFloat(cantidad) <= 0) {
-      Alert.alert('Error', 'Selecciona un ingrediente y una cantidad válida.');
+  const addIngredient = () => {
+    if (!selectedIngredient || !isPositiveNumber(amount)) {
+      showError(t.selectIngredientValidAmount);
       return;
     }
-
-    if (ingredientesSeleccionados.some((ing) => ing.id === selectedIngredient.id)) {
-      Alert.alert('Error', 'Este ingrediente ya ha sido añadido.');
+    if (selectedIngredients.some((ing) => ing.id === selectedIngredient.id)) {
+      showError(t.ingredientAlreadyAdded);
       return;
     }
-
-    setIngredientesSeleccionados((prev) => [
+    setSelectedIngredients((prev) => [
       ...prev,
-      { ...selectedIngredient, cantidad: parseFloat(cantidad) },
+      { ...selectedIngredient, cantidad: parseFloat(amount) },
     ]);
     closeModal();
   };
 
-  const removeIngrediente = (id: string) => {
-    setIngredientesSeleccionados((prev) => prev.filter((ing) => ing.id !== id));
+  const removeIngredient = (id: string) => {
+    setSelectedIngredients((prev) => prev.filter((ing) => ing.id !== id));
   };
 
   const openModal = (ingredient: IngredienteBase) => {
     setSelectedIngredient(ingredient);
-    setCantidad('');
+    setAmount('');
     setIsModalVisible(true);
   };
 
   const closeModal = () => {
     setSelectedIngredient(null);
-    setCantidad('');
+    setAmount('');
     setIsModalVisible(false);
   };
 
   const onSubmit = async () => {
-    if (!newTitulo || !newDescripcion || !newRecetaUrl || pasos.length === 0 || ingredientesSeleccionados.length === 0) {
-      Alert.alert('Error', 'Completa todos los campos antes de crear la receta.');
+    if (isEmpty(title) || isEmpty(description) || isEmpty(imageUrl) || steps.length === 0 || selectedIngredients.length === 0) {
+      showError(t.completeAllFieldsCreate);
       return;
     }
 
-    await createReceta(newTitulo, newDescripcion, newRecetaUrl, pasos, ingredientesSeleccionados);
-    setNewTitulo('');
-    setNewDescripcion('');
-    setNewRecetaUrl('');
-    setPasos([]);
+    await createRecipe(title, description, imageUrl, steps, selectedIngredients);
+    setTitle('');
+    setDescription('');
+    setImageUrl('');
+    setSteps([]);
     setInputHeights([]);
-    setIngredientesSeleccionados([]);
+    setSelectedIngredients([]);
+  };
+
+  const removeStep = (index: number) => {
+    setSteps((prev) => prev.filter((_, i) => i !== index));
+    setInputHeights((prev) => prev.filter((_, i) => i !== index));
   };
 
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={80}
     >
       <ScrollView
-        contentContainerStyle={[styles.container, { paddingBottom: 20 }]}
-        nestedScrollEnabled
+        contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={true}
       >
-        <Input label="Título" value={newTitulo} onChangeText={setNewTitulo} />
-        <Input label="Descripción" value={newDescripcion} onChangeText={setNewDescripcion} />
-        <Img_receta size={200} url={newRecetaUrl} onUpload={setNewRecetaUrl} />
+        <Input label={t.createRecipe} value={title} onChangeText={setTitle} />
+        <Input label={t.description || 'Description'} value={description} onChangeText={setDescription} />
+        <Img_receta size={200} url={imageUrl} onUpload={setImageUrl} />
 
-        <Text style={styles.sectionTitle}>Ingredientes</Text>
-        <View style={{ zIndex: 1000, flex: 1, marginBottom: 20 }}>
+        <Text style={styles.sectionTitle}>{t.ingredients}</Text>
+        <View style={[styles.dropdownContainer, openDropdown ? styles.zIndex1000 : null]}>
           <DropDownPicker
             open={openDropdown}
             value={selectedIngredient?.id || null}
-            items={filteredIngredientes.map((ing) => ({
+            items={filteredIngredients.map((ing) => ({
               label: `${ing.nombre || 'Ingrediente desconocido'} (${ing.unidad || 'unidad desconocida'})`,
               value: ing.id,
               ingredient: ing,
@@ -114,17 +124,17 @@ export default function CrearReceta() {
               const value = callback(selectedIngredient?.id || null);
               if (!value) return; // Ensure value is valid
 
-              const ingredient = ingredientes.find((ing) => ing.id === value);
+              const ingredient = ingredients.find((ing) => ing.id === value);
               if (ingredient) {
                 openModal(ingredient);
               }
             }}
             setItems={() => {}}
             searchable
-            searchPlaceholder="Buscar ingrediente..."
+            searchPlaceholder={t.searchIngredient}
             onChangeSearchText={setSearchValue}
-            style={[styles.dropdown, { zIndex: 1000 }]}
-            dropDownContainerStyle={{ zIndex: 1000, maxHeight: 200 }}
+            style={styles.dropdown}
+            dropDownContainerStyle={styles.dropDownContainer}
             listMode="SCROLLVIEW"
             scrollViewProps={{
               nestedScrollEnabled: true,
@@ -135,60 +145,66 @@ export default function CrearReceta() {
         <Modal visible={isModalVisible} transparent animationType="slide">
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Añadir cantidad</Text>
+              <Text style={styles.modalTitle}>{t.addQuantity}</Text>
               <Text>{selectedIngredient?.nombre || ''} ({selectedIngredient?.unidad || ''})</Text>
               <TextInput
                 style={styles.input}
                 keyboardType="numeric"
-                placeholder="Cantidad"
-                value={cantidad}
-                onChangeText={setCantidad}
+                placeholder={t.amount}
+                value={amount}
+                onChangeText={setAmount}
               />
               <View style={styles.modalButtons}>
-                <Button title="Cancelar" onPress={closeModal} />
-                <Button title="Añadir" onPress={addIngrediente} />
+                <Button title={t.cancel} onPress={closeModal} />
+                <Button title={t.add} onPress={addIngredient} />
               </View>
             </View>
           </View>
         </Modal>
 
-        {ingredientesSeleccionados.map((ing, index) => (
-          <View key={index} style={styles.ingredienteItem}>
+        {selectedIngredients.map((ing, index) => (
+          <View key={index} style={styles.ingredientItem}>
             <Text>{ing.nombre || ''} - {ing.cantidad || ''} {ing.unidad || ''}</Text>
-            <Pressable onPress={() => removeIngrediente(ing.id)}>
-              <Text style={styles.removeText}>Eliminar</Text>
+            <Pressable onPress={() => removeIngredient(ing.id)}>
+              <Text style={styles.removeText}>{t.remove}</Text>
             </Pressable>
           </View>
         ))}
 
-        <Text style={styles.sectionTitle}>Pasos</Text>
-        {pasos.map((paso, index) => (
-          <Input
-            key={index}
-            label={`Paso ${index + 1}`}
-            value={paso}
-            onChangeText={(text) => {
-              const updatedPasos = [...pasos];
-              updatedPasos[index] = text;
-              setPasos(updatedPasos);
-            }}
-            multiline
-            style={{ height: inputHeights[index] || 40 }}
-            onContentSizeChange={(event) => {
-              const updatedHeights = [...inputHeights];
-              updatedHeights[index] = event.nativeEvent.contentSize.height;
-              setInputHeights(updatedHeights);
-            }}
-          />
+        <Text style={styles.sectionTitle}>{t.steps}</Text>
+        {steps.map((step, index) => (
+          <View key={index} style={styles.stepRow}>
+            <View style={{ flex: 1 }}>
+              <Input
+                label={`${t.step} ${index + 1}`}
+                value={step}
+                onChangeText={(text) => {
+                  const updatedSteps = [...steps];
+                  updatedSteps[index] = text;
+                  setSteps(updatedSteps);
+                }}
+                multiline
+                style={[styles.stepInput, { height: inputHeights[index] || 40 }]}
+                onContentSizeChange={(event) => {
+                  const updatedHeights = [...inputHeights];
+                  updatedHeights[index] = event.nativeEvent.contentSize.height;
+                  setInputHeights(updatedHeights);
+                }}
+              />
+            </View>
+            <Pressable onPress={() => removeStep(index)} style={styles.removeStepButton}>
+              <Text style={styles.removeText}>{t.remove || 'Eliminar'}</Text>
+            </Pressable>
+          </View>
         ))}
-        <Pressable onPress={() => setPasos([...pasos, ''])} style={styles.addPasoButton}>
-          <Text style={styles.addPasoText}>+ Añadir Paso</Text>
+        <Pressable onPress={() => setSteps([...steps, ''])} style={styles.addStepButton}>
+          <Text style={styles.addStepText}>{t.addStep}</Text>
         </Pressable>
 
         <Button
-          title="Crear Receta"
+          title={t.createRecipe}
           onPress={onSubmit}
-          disabled={loadingIngredientes || !newTitulo || !newDescripcion || !newRecetaUrl || pasos.length === 0 || ingredientesSeleccionados.length === 0}
+          disabled={loadingIngredients || !title || !description || !imageUrl || steps.length === 0 || selectedIngredients.length === 0}
         />
       </ScrollView>
     </KeyboardAvoidingView>
@@ -196,16 +212,34 @@ export default function CrearReceta() {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 20 },
+  container: { flex: 1, padding: 20 },
+  scrollContent: { paddingBottom: 40, paddingHorizontal: 20 },
   sectionTitle: { fontSize: 20, fontWeight: 'bold', marginVertical: 10 },
+  dropdownContainer: { marginBottom: 20 },
   dropdown: { marginBottom: 10 },
+  zIndex1000: { zIndex: 1000 },
+  dropDownContainer: { maxHeight: 200 },
   modalContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.5)' },
   modalContent: { width: '80%', backgroundColor: 'white', padding: 20, borderRadius: 10, alignItems: 'center' },
   modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
   input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 5, padding: 10, width: '100%', marginVertical: 10 },
   modalButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
-  ingredienteItem: { flexDirection: 'row', justifyContent: 'space-between', marginVertical: 5 },
+  ingredientItem: { flexDirection: 'row', justifyContent: 'space-between', marginVertical: 5 },
   removeText: { color: 'red' },
-  addPasoButton: { marginTop: 10, padding: 10, backgroundColor: '#ddd', alignItems: 'center', borderRadius: 5 },
-  addPasoText: { fontSize: 16, color: '#000' },
+  stepInput: {},
+  addStepButton: { marginTop: 10, padding: 10, backgroundColor: '#ddd', alignItems: 'center', borderRadius: 5 },
+  addStepText: { fontSize: 16, color: '#000' },
+  stepRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  removeStepButton: {
+    marginLeft: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 60,
+  },
 });

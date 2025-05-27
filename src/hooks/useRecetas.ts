@@ -4,15 +4,7 @@ import { Alert } from 'react-native';
 import { useUserStore } from '../store/useUserStore';
 import uuid from 'react-native-uuid';
 import { Float } from 'react-native/Libraries/Types/CodegenTypes';
-
-interface Receta {
-    id: string
-    titulo: string
-    descripcion: string
-    imagen_url: string
-    pasos: string[];
-    ingredientes: { nombre: string; cantidad: number; unidad: string }[];
-};
+import type { Receta, Ingrediente, IngredienteBase } from '../navigation/types';
 
 export function useRecetas() {
   const user = useUserStore((state) => state.user); // Obtener el usuario del store
@@ -79,50 +71,33 @@ export function useRecetas() {
       if (!user) throw new Error('No user available!');
 
       const receta_id = uuid.v4(); // Generar un ID único para la receta
-      
       const { error: recetaError } = await supabase.from('recetas').insert([
         {
-          id_receta: receta_id, 
-          id_usuario: user.id, // ID del usuario autenticado
+          id_receta: receta_id,
+          id_usuario: user.id,
           titulo: newTitulo,
           descripcion: newDescripcion,
-          imagen_url: newRecetaUrl, // URL de la imagen subida
-          pasos: pasos, // Pasos de la receta
-          publicada: false, // Valor por defecto para la columna `publicada`
-          fecha_creacion: new Date(), // Fecha de creación
+          imagen_url: newRecetaUrl,
+          pasos: pasos,
+          publicada: false,
+          fecha_creacion: new Date(),
         },
       ]);
-
-      if (recetaError) {
-        console.error('Error al insertar la receta:', recetaError); // Log del error
-        throw recetaError;
-      }
-
-      console.log('Receta insertada correctamente'); // Log de éxito
-
+      if (recetaError) throw recetaError;
       const ingredientesData = ingredientes.map((ingrediente) => ({
         id_receta: receta_id,
-        id_ingrediente: ingrediente.id, // ID del ingrediente
+        id_ingrediente: ingrediente.id,
         cantidad: ingrediente.cantidad,
         created_at: new Date(),
       }));
-
-      console.log('Datos de los ingredientes a insertar:', ingredientesData); // Log de los datos de ingredientes
-
-      const { error: ingredientesError } = await supabase.from('receta_ingredientes').insert(ingredientesData);
-
-      if (ingredientesError) {
-        console.error('Error al insertar los ingredientes:', ingredientesError); // Log del error
-        throw ingredientesError;
+      if (ingredientesData.length > 0) {
+        const { error: ingredientesError } = await supabase.from('receta_ingredientes').insert(ingredientesData);
+        if (ingredientesError) throw ingredientesError;
       }
-
-      console.log('Ingredientes insertados correctamente'); // Log de éxito
-
       Alert.alert('Éxito', 'Receta creada correctamente');
-      fetchRecetas(); // Refrescar la lista
+      fetchRecetas();
     } catch (error) {
       if (error instanceof Error) {
-        console.error('Error en createReceta:', error.message); // Log del error general
         Alert.alert('Error', error.message);
       }
     } finally {
@@ -130,16 +105,12 @@ export function useRecetas() {
     }
   }
 
-  async function deleteReceta(id: string) {
+  async function deleteReceta(id_receta: string) {
     try {
       setLoading(true);
-      const { error } = await supabase.from('recetas').delete().eq('id_receta', id);
-
+      const { error } = await supabase.from('recetas').delete().eq('id_receta', id_receta);
       if (error) throw error;
-
-      // Actualizar la lista de recetas localmente
-      setRecetas((prevRecetas) => prevRecetas.filter((receta) => receta.id !== id));
-
+      setRecetas((prevRecetas) => prevRecetas.filter((receta) => receta.id_receta !== id_receta));
       Alert.alert('Éxito', 'Receta eliminada correctamente');
     } catch (error) {
       if (error instanceof Error) {
@@ -150,27 +121,20 @@ export function useRecetas() {
     }
   }
   
-  async function updateReceta(id: string, newTitulo: string, newDescripcion: string, newRecetaUrl: string, pasos: string[], ingredientes: { id: string, nombre: string; cantidad: number; unidad: string }[]) {
+  async function updateReceta(id_receta: string, newTitulo: string, newDescripcion: string, newRecetaUrl: string, pasos: string[], ingredientes: { id: string, nombre: string; cantidad: number; unidad: string }[]) {
     try {
       setLoading(true);
-
-      // Actualizar los datos principales de la receta
       const { error: recetaError } = await supabase.from('recetas').update({
         titulo: newTitulo,
         descripcion: newDescripcion,
         imagen_url: newRecetaUrl,
         pasos: pasos,
-      }).eq('id_receta', id);
-
+      }).eq('id_receta', id_receta);
       if (recetaError) throw recetaError;
-
-      // Eliminar ingredientes antiguos
-      const { error: deleteError } = await supabase.from('receta_ingredientes').delete().eq('id_receta', id);
+      const { error: deleteError } = await supabase.from('receta_ingredientes').delete().eq('id_receta', id_receta);
       if (deleteError) throw deleteError;
-
-      // Insertar los nuevos ingredientes
       const ingredientesData = ingredientes.map((ingrediente) => ({
-        id_receta: id,
+        id_receta: id_receta,
         id_ingrediente: ingrediente.id,
         cantidad: ingrediente.cantidad,
         created_at: new Date(),
@@ -179,7 +143,6 @@ export function useRecetas() {
         const { error: insertError } = await supabase.from('receta_ingredientes').insert(ingredientesData);
         if (insertError) throw insertError;
       }
-
       Alert.alert('Éxito', 'Receta actualizada correctamente');
       fetchRecetas();
     } catch (error) {
@@ -199,7 +162,6 @@ export function useRecetas() {
         .update({ publicada: publicar })
         .eq('id_receta', id_receta);
       if (error) throw error;
-      // Opcional: refrescar recetas si es necesario
       await fetchRecetas();
       return publicar;
     } catch (error) {
@@ -223,7 +185,6 @@ export function useRecetas() {
       if (error) throw error;
       const recetasWithIngredientes = await Promise.all(
         (data || []).map(async (receta: any) => {
-          // Obtener ingredientes de la receta
           const { data: recetaIngredientes, error: errorRecIng } = await supabase
             .from('receta_ingredientes')
             .select('id_ingrediente, cantidad')

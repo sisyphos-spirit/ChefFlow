@@ -2,7 +2,7 @@ import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Text, Button } from '@rneui/themed';
 import Img_preview from '../../components/Img_preview';
 import { useIngredientes } from '../../hooks/useIngredientes';
-import type { Ingrediente } from '../../hooks/useIngredientes';
+import type { Ingrediente } from '../../navigation/types';
 import { useState, useEffect } from 'react';
 import { useRecetas } from '../../hooks/useRecetas';
 import { useNavigation } from '@react-navigation/native';
@@ -11,13 +11,24 @@ import { RootStackParamList } from '../../navigation/types';
 import { useUserStore } from '../../store/useUserStore';
 import { Icon } from '@rneui/themed';
 import * as Clipboard from 'expo-clipboard';
+import type { RouteProp } from '@react-navigation/native';
+import type { Receta } from '../../navigation/types';
+import { useLanguageStore } from '../../store/useLanguageStore';
+import { messages } from '../../constants/messages';
 
-export default function InfoReceta({ route }: { route: any }) {
+interface InfoRecetaProps {
+  route: { params: { receta: Receta } };
+}
+
+export default function InfoReceta({ route }: InfoRecetaProps) {
   const { receta } = route.params;
+  // Cambiar referencias a los nombres de la base de datos
   const { fetchIngredientesReceta, fetchConversionUnidades, convertirUnidad } = useIngredientes();
   const { deleteReceta, togglePublicarReceta } = useRecetas();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const user = useUserStore((state) => state.user);
+  const language = useLanguageStore((state) => state.language);
+  const t = messages[language];
   const [ingredientes, setIngredientes] = useState<Ingrediente[]>([]);
   const [nutritionalTotals, setNutritionalTotals] = useState({
     calorias: 0,
@@ -25,68 +36,74 @@ export default function InfoReceta({ route }: { route: any }) {
     carbohidratos: 0,
     grasas: 0,
   });
-  const [publicando, setPublicando] = useState(false);
-  const [publicada, setPublicada] = useState(receta.publicada);
-  const esDueno = user && (receta.id_usuario === user.id);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [isPublished, setIsPublished] = useState(receta.publicada);
+  // Cambiar comprobación de propietario para usar el campo correcto del usuario de Supabase
+  // El objeto user de Supabase tiene el campo 'id', no 'id_usuario'.
+  const isOwner = user && (receta.id_usuario === user.id);
 
   useEffect(() => {
     async function loadIngredientes() {
-      if (receta && receta.id_receta) {
-        try {
-          const fetchedIngredientes = await fetchIngredientesReceta(receta.id_receta);
-          const conversionMap = await fetchConversionUnidades();
-
-          // Calcular valores nutricionales usando cantidades en gramos, pero guardar ingredientes con su unidad original
-          let totalCalorias = 0;
-          let totalProteinas = 0;
-          let totalCarbohidratos = 0;
-          let totalGrasas = 0;
-
-          fetchedIngredientes.forEach((ing) => {
-            const cantidadEnGramos = ing.unidad === 'g' ? ing.cantidad : convertirUnidad(ing.cantidad, ing.id, conversionMap);
-            totalCalorias += (ing.calorias || 0) * (cantidadEnGramos / 100);
-            totalProteinas += (ing.proteinas || 0) * (cantidadEnGramos / 100);
-            totalCarbohidratos += (ing.carbohidratos || 0) * (cantidadEnGramos / 100);
-            totalGrasas += (ing.grasas || 0) * (cantidadEnGramos / 100);
-          });
-
-          setIngredientes(fetchedIngredientes); // Guardar ingredientes con unidad original
-          setNutritionalTotals({
-            calorias: totalCalorias,
-            proteinas: totalProteinas,
-            carbohidratos: totalCarbohidratos,
-            grasas: totalGrasas,
-          });
-        } catch (error) {
-          console.error('Error al cargar los ingredientes:', error);
-        }
+      if (!receta || !receta.id_receta) {
+        console.warn('La receta no existe o fue eliminada.');
+        setIngredientes([]);
+        setNutritionalTotals({ calorias: 0, proteinas: 0, carbohidratos: 0, grasas: 0 });
+        return;
+      }
+      try {
+        const fetchedIngredientes = await fetchIngredientesReceta(receta.id_receta);
+        const conversionMap = await fetchConversionUnidades();
+        let totalCalorias = 0;
+        let totalProteinas = 0;
+        let totalCarbohidratos = 0;
+        let totalGrasas = 0;
+        fetchedIngredientes.forEach((ing) => {
+          if (!ing || typeof ing.cantidad !== 'number') return;
+          const cantidadEnGramos = ing.unidad === 'g' ? ing.cantidad : convertirUnidad(ing.cantidad, ing.id, conversionMap);
+          totalCalorias += (ing.calorias || 0) * (cantidadEnGramos / 100);
+          totalProteinas += (ing.proteinas || 0) * (cantidadEnGramos / 100);
+          totalCarbohidratos += (ing.carbohidratos || 0) * (cantidadEnGramos / 100);
+          totalGrasas += (ing.grasas || 0) * (cantidadEnGramos / 100);
+        });
+        setIngredientes(fetchedIngredientes);
+        setNutritionalTotals({
+          calorias: totalCalorias,
+          proteinas: totalProteinas,
+          carbohidratos: totalCarbohidratos,
+          grasas: totalGrasas,
+        });
+      } catch (error) {
+        showAlert('Error', 'Error al cargar los ingredientes.');
+        setIngredientes([]);
+        setNutritionalTotals({ calorias: 0, proteinas: 0, carbohidratos: 0, grasas: 0 });
       }
     }
-
     if (receta) {
       loadIngredientes();
     } else {
       console.warn('La receta no existe o fue eliminada.');
+      setIngredientes([]);
+      setNutritionalTotals({ calorias: 0, proteinas: 0, carbohidratos: 0, grasas: 0 });
     }
   }, [receta]);
 
   const handleDelete = async () => {
     Alert.alert(
-      'Confirmar eliminación',
-      '¿Estás seguro de que deseas eliminar esta receta?',
+      t.confirmDeleteTitle,
+      t.confirmDeleteMsg,
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t.cancel, style: 'cancel' },
         {
-          text: 'Eliminar',
+          text: t.delete,
           style: 'destructive',
           onPress: async () => {
             try {
               if (receta && receta.id_receta) {
                 await deleteReceta(receta.id_receta);
-                navigation.goBack(); // Redirige a la pantalla anterior
+                navigation.goBack();
               }
             } catch (error) {
-              alert(`Error al eliminar la receta`);
+              alert(t.errorDelete);
             }
           },
         },
@@ -99,37 +116,52 @@ export default function InfoReceta({ route }: { route: any }) {
   };
 
   const handleTogglePublicar = async () => {
-    if (!publicada) {
+    if (!isPublished) {
       // Si va a hacer pública una receta privada, mostrar advertencia
       Alert.alert(
-        'Advertencia',
-        'Estás a punto de hacer pública esta receta. Cualquier usuario podrá verla y copiar su ID. ¿Deseas continuar?',
+        t.makePublicWarningTitle,
+        t.makePublicWarningMsg,
         [
-          { text: 'Cancelar', style: 'cancel' },
+          { text: t.cancel, style: 'cancel' },
           {
-            text: 'Sí, hacer pública',
+            text: t.yesMakePublic,
             style: 'default',
             onPress: async () => {
-              setPublicando(true);
-              const nuevoEstado = await togglePublicarReceta(receta.id_receta, true);
-              if (nuevoEstado !== null) setPublicada(nuevoEstado);
-              setPublicando(false);
+              setIsPublishing(true);
+              if (receta && receta.id_receta) {
+                const nuevoEstado = await togglePublicarReceta(receta.id_receta, true);
+                if (nuevoEstado !== null) setIsPublished(nuevoEstado);
+              }
+              setIsPublishing(false);
             },
           },
         ]
       );
     } else {
-      setPublicando(true);
-      const nuevoEstado = await togglePublicarReceta(receta.id_receta, false);
-      if (nuevoEstado !== null) setPublicada(nuevoEstado);
-      setPublicando(false);
+      setIsPublishing(true);
+      if (receta && receta.id_receta) {
+        const nuevoEstado = await togglePublicarReceta(receta.id_receta, false);
+        if (nuevoEstado !== null) setIsPublished(nuevoEstado);
+      }
+      setIsPublishing(false);
     }
   };
+
+  function showAlert(title: string, message: string, buttons?: any[]) {
+    Alert.alert(title, message, buttons);
+  }
+  function showCopyIdAlert(isPrivate: boolean) {
+    if (isPrivate) {
+      showAlert(t.copyIdWarningTitle || '', t.copyIdWarningMsg || '');
+    } else {
+      showAlert(t.idCopied, t.idCopiedMsg || '');
+    }
+  }
 
   if (!receta) {
     return (
       <View style={styles.container}>
-        <Text style={styles.errorText}>Error: No se encontró la receta.</Text>
+        <Text style={styles.errorText}>{t.errorRecipeNotFound}</Text>
       </View>
     );
   }
@@ -139,87 +171,80 @@ export default function InfoReceta({ route }: { route: any }) {
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.container}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <View style={styles.row}>
           <Text style={styles.titulo}>{receta.titulo}</Text>
-          {esDueno && (
+          {isOwner && (
             <Button
               type="clear"
               onPress={handleTogglePublicar}
-              loading={publicando}
+              loading={isPublishing}
               icon={
                 <Icon
-                  name={publicada ? 'lock-open' : 'lock'}
+                  name={isPublished ? 'lock-open' : 'lock'}
                   type="material"
-                  color={publicada ? 'green' : 'grey'}
+                  color={isPublished ? 'green' : 'grey'}
                   size={28}
                 />
               }
-              accessibilityLabel={publicada ? 'Hacer privada' : 'Hacer pública'}
+              accessibilityLabel={isPublished ? 'Hacer privada' : 'Hacer pública'}
             />
           )}
         </View>
         <Text>{receta.descripcion}</Text>
 
-        <Text style={styles.sectionTitle}>Valores nutricionales:</Text>
-        <Text>Calorías: {nutritionalTotals.calorias.toFixed(2)}</Text>
-        <Text>Proteínas: {nutritionalTotals.proteinas.toFixed(2)} g</Text>
-        <Text>Grasas: {nutritionalTotals.grasas.toFixed(2)} g</Text>
-        <Text>Carbohidratos: {nutritionalTotals.carbohidratos.toFixed(2)} g</Text>
+        <Text style={styles.sectionTitle}>{t.nutritionalValues}</Text>
+        <Text>{t.calories}: {nutritionalTotals.calorias.toFixed(2)}</Text>
+        <Text>{t.proteins}: {nutritionalTotals.proteinas.toFixed(2)} g</Text>
+        <Text>{t.fats}: {nutritionalTotals.grasas.toFixed(2)} g</Text>
+        <Text>{t.carbs}: {nutritionalTotals.carbohidratos.toFixed(2)} g</Text>
 
         <Img_preview size={200} url={receta.imagen_url} onUpload={() => {}} />
 
-        <Text style={styles.sectionTitle}>Ingredientes:</Text>
+        <Text style={styles.sectionTitle}>{t.ingredients}</Text>
         {ingredientes.length > 0 ? (
-          ingredientes.map((ing: { nombre: string; cantidad: number; unidad: string }, index: number) => (
+          ingredientes.map((ing, index) => (
             <Text key={index}>
               {ing.nombre} - {ing.cantidad.toFixed(2)} {ing.unidad}
             </Text>
           ))
         ) : (
-          <Text>No hay ingredientes disponibles.</Text>
+          <Text>{t.noIngredients}</Text>
         )}
 
-        <Text style={styles.sectionTitle}>Pasos:</Text>
+        <Text style={styles.sectionTitle}>{t.steps}</Text>
         {pasos.length > 0 ? (
-          pasos.map((paso: string, index: number) => (
+          pasos.map((paso, index) => (
             <Text key={index}>
               {index + 1}. {paso}
             </Text>
           ))
         ) : (
-          <Text>No hay pasos disponibles.</Text>
+          <Text>{t.noSteps}</Text>
         )}
 
         {/* Botón para copiar el ID de la receta: visible para todos si es pública, o para el dueño si es privada */}
-        {((receta.publicada === true) || esDueno) && (
+        {((receta.publicada === true) || isOwner) && (
           <Button
-            title="Copiar ID de receta"
+            title={t.copyId}
             onPress={async () => {
-              await Clipboard.setStringAsync(receta.id_receta || receta.id || '');
-              if (!receta.publicada && esDueno) {
-                Alert.alert(
-                  'Precaución al compartir',
-                  'Estás a punto de compartir el ID de una receta privada. Solo comparte este ID con personas de confianza, ya que cualquiera con el ID podrá ver tu receta.'
-                );
-              } else {
-                Alert.alert('ID copiado', 'El ID de la receta se ha copiado al portapapeles.');
-              }
+              await Clipboard.setStringAsync(receta.id_receta || '');
+              showCopyIdAlert(!receta.publicada && !!isOwner);
             }}
-            buttonStyle={{ backgroundColor: '#888', marginTop: 10 }}
+            buttonStyle={styles.copyButton}
           />
         )}
-        {esDueno && (
+        {isOwner && (
           <>
             <Button
-              title="Editar Receta"
+              title={t.editRecipe}
               onPress={handleEdit}
-              buttonStyle={{ backgroundColor: 'blue', marginTop: 20 }}
+              buttonStyle={styles.editButton}
             />
 
             <Button
-              title="Eliminar Receta"
+              title={t.deleteRecipe}
               onPress={handleDelete}
-              buttonStyle={{ backgroundColor: 'red', marginTop: 20 }}
+              buttonStyle={styles.deleteButton}
             />
           </>
         )}
@@ -231,7 +256,11 @@ export default function InfoReceta({ route }: { route: any }) {
 const styles = StyleSheet.create({
   scrollContainer: { flexGrow: 1 },
   container: { marginHorizontal: 25, padding: 10, borderWidth: 1, borderRadius: 5 },
+  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   titulo: { fontSize: 30, fontWeight: 'bold', marginBottom: 10 },
   sectionTitle: { fontSize: 20, fontWeight: 'bold', marginTop: 15 },
   errorText: { fontSize: 18, color: 'red', textAlign: 'center', marginTop: 20 },
+  copyButton: { backgroundColor: '#888', marginTop: 10 },
+  editButton: { backgroundColor: 'blue', marginTop: 20 },
+  deleteButton: { backgroundColor: 'red', marginTop: 20 },
 });

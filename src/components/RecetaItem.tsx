@@ -1,12 +1,6 @@
 import { View, StyleSheet, Text } from 'react-native';
 import Img_preview from './Img_preview';
-
-interface Receta {
-    id: string;
-    titulo: string;
-    descripcion: string;
-    imagen_url: string;
-}
+import type { Receta } from '../navigation/types';
 
 export default function RecetaItem({ item }: {
     item: Receta;

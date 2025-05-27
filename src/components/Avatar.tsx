@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { StyleSheet, View, Alert, Image, Button } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
+import { useLanguageStore } from '../store/useLanguageStore'
+import { messages } from '../constants/messages'
 
 interface Props {
   size: number
@@ -13,6 +15,9 @@ export default function Avatar({ url, size = 150, onUpload }: Props) {
   const [uploading, setUploading] = useState(false)
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const avatarSize = { height: size, width: size }
+
+  const language = useLanguageStore((state) => state.language)
+  const t = messages[language]
 
   useEffect(() => {
     if (url) downloadImage(url)
@@ -93,7 +98,7 @@ export default function Avatar({ url, size = 150, onUpload }: Props) {
       {avatarUrl ? (
         <Image
           source={{ uri: avatarUrl }}
-          accessibilityLabel="Avatar"
+          accessibilityLabel={t.avatar || 'Avatar'}
           style={[avatarSize, styles.avatar, styles.image]}
         />
       ) : (
@@ -101,7 +106,7 @@ export default function Avatar({ url, size = 150, onUpload }: Props) {
       )}
       <View>
         <Button
-          title={uploading ? 'Subiendo ...' : 'Subir imagen'}
+          title={uploading ? t.uploading || 'Subiendo ...' : t.uploadImage || 'Subir imagen'}
           onPress={uploadAvatar}
           disabled={uploading}
         />

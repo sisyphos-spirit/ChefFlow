@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { StyleSheet, View, Alert, Image, Button } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
+import { useLanguageStore } from '../store/useLanguageStore';
+import { messages } from '../constants/messages';
 
 interface Props {
   size: number
@@ -37,16 +39,23 @@ export default function Img_preview({ url, size = 150, onUpload }: Props) {
     }
   }
 
+  const language = useLanguageStore((state) => state.language);
+  const t = messages[language];
+
   return (
     <View>
       {imageUrl ? (
         <Image
           source={{ uri: imageUrl }}
-          accessibilityLabel="Imagen de la receta"
+          accessibilityLabel={t.recipeImage || 'Imagen de la receta'}
           style={[imageSize, styles.image, styles.image2]}
         />
       ) : (
-        <View style={[imageSize, styles.image, styles.noImage]} />
+        <View style={[imageSize, styles.image, styles.noImage]}>
+          <View style={{flex:1, justifyContent:'center', alignItems:'center'}}>
+            <Button title={t.noImage || 'Sin imagen'} disabled />
+          </View>
+        </View>
       )}
     </View>
   )

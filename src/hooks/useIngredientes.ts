@@ -1,20 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Alert } from 'react-native';
-
-export interface IngredienteBase {
-  id: string;
-  nombre: string;
-  unidad: string;
-}
-
-export interface Ingrediente extends IngredienteBase {
-  cantidad: number;
-  calorias?: number;
-  proteinas?: number;
-  carbohidratos?: number;
-  grasas?: number;
-}
+import type { Ingrediente, IngredienteBase } from '../navigation/types';
 
 export function useIngredientes() {
   const [loading, setLoading] = useState(false);

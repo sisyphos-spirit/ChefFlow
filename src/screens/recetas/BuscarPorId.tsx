@@ -1,16 +1,22 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useRecetas } from '../../hooks/useRecetas';
 import { supabase } from '../../lib/supabase';
+import { isEmpty } from '../../utils/validation';
+import { showError } from '../../utils/alerts';
+import { useLanguageStore } from '../../store/useLanguageStore';
+import { messages } from '../../constants/messages';
 
-export default function BuscarPorId() {
-  const [recetaId, setRecetaId] = useState('');
+export default function SearchById() {
+  const [recipeId, setRecipeId] = useState('');
   const navigation = useNavigation();
-  const { recetas, fetchRecetas } = useRecetas();
+  const { recetas: recipes, fetchRecetas: fetchRecipes } = useRecetas();
+  const language = useLanguageStore((state) => state.language);
+  const t = messages[language];
 
-  // Buscar receta por id_receta directamente en la base de datos
-  const fetchRecetaById = async (id: string) => {
+  // Buscar receta por id directamente en la base de datos usando el nombre real del campo
+  const fetchRecipeById = async (id: string) => {
     const { data, error } = await supabase
       .from('recetas')
       .select('*')
@@ -18,55 +24,55 @@ export default function BuscarPorId() {
       .single();
     if (error || !data) return null;
     // Obtener ingredientes
-    const { data: recetaIngredientes } = await supabase
+    const { data: recipeIngredients } = await supabase
       .from('receta_ingredientes')
       .select('id_ingrediente, cantidad')
       .eq('id_receta', id);
-    let ingredientes: any[] = [];
-    if (recetaIngredientes && recetaIngredientes.length > 0) {
-      const ingredienteIds = recetaIngredientes.map((item: any) => item.id_ingrediente);
-      const { data: ingredientesData } = await supabase
+    let ingredients: any[] = [];
+    if (recipeIngredients && recipeIngredients.length > 0) {
+      const ingredientIds = recipeIngredients.map((item: any) => item.id_ingrediente);
+      const { data: ingredientsData } = await supabase
         .from('ingredientes')
         .select('id, nombre, unidad')
-        .in('id', ingredienteIds);
-      ingredientes = recetaIngredientes.map((ri: any) => {
-        const ing = ingredientesData?.find((i: any) => i.id === ri.id_ingrediente);
+        .in('id', ingredientIds);
+      ingredients = recipeIngredients.map((ri: any) => {
+        const ing = ingredientsData?.find((i: any) => i.id === ri.id_ingrediente);
         return {
           id: ri.id_ingrediente,
-          nombre: ing?.nombre || 'Desconocido',
-          unidad: ing?.unidad || 'Desconocido',
+          nombre: ing?.nombre || 'Unknown',
+          unidad: ing?.unidad || 'Unknown',
           cantidad: ri.cantidad,
         };
       });
     }
-    return { ...data, ingredientes };
+    return { ...data, ingredients };
   };
 
-  const handleBuscar = async () => {
-    if (!recetaId.trim()) {
-      Alert.alert('Error', 'Por favor, introduce un ID de receta.');
+  const handleSearch = async () => {
+    if (isEmpty(recipeId)) {
+      showError(t.enterRecipeId);
       return;
     }
-    const receta = await fetchRecetaById(recetaId.trim());
-    if (receta) {
-      (navigation as any).navigate('InfoReceta', { receta });
+    const recipe = await fetchRecipeById(recipeId.trim());
+    if (recipe) {
+      (navigation as any).navigate('InfoReceta', { receta: recipe });
     } else {
-      Alert.alert('No encontrado', 'No se encontró ninguna receta con ese ID.');
+      showError(t.noRecipeFoundWithId, t.notFound);
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Pega el ID de la receta:</Text>
+      <Text style={styles.label}>{t.pasteRecipeId}</Text>
       <TextInput
         style={styles.input}
-        value={recetaId}
-        onChangeText={setRecetaId}
-        placeholder="ID de la receta"
+        value={recipeId}
+        onChangeText={setRecipeId}
+        placeholder={t.recipeId}
         autoCapitalize="none"
         autoCorrect={false}
       />
-      <Button title="Buscar receta" onPress={handleBuscar} />
+      <Button title={t.searchRecipe} onPress={handleSearch} />
     </View>
   );
 }

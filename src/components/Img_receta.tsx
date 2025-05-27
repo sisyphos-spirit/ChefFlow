@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { StyleSheet, View, Alert, Image, Text, TouchableOpacity } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
+import { useLanguageStore } from '../store/useLanguageStore';
+import { messages } from '../constants/messages';
 
 interface Props {
   size: number
@@ -88,6 +90,9 @@ export default function Img_receta({ url, size = 150, onUpload }: Props) {
     }
   }
 
+  const language = useLanguageStore((state) => state.language);
+  const t = messages[language];
+
   return (
     <View>
       {imageUrl ? (
@@ -111,7 +116,7 @@ export default function Img_receta({ url, size = 150, onUpload }: Props) {
           }}
         >
           <Text style={{ color: '#fff', fontWeight: 'bold' }}>
-            {uploading ? 'Subiendo...' : 'Subir Imagen'}
+            {uploading ? t.uploading || 'Subiendo...' : t.uploadImage || 'Subir Imagen'}
           </Text>
         </TouchableOpacity>
       </View>

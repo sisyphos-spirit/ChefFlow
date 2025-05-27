@@ -1,15 +1,20 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { StyleSheet, View, Alert } from 'react-native'
+import { StyleSheet, View, Alert, ScrollView } from 'react-native'
 import { Button, Input } from '@rneui/themed'
 import { useUserStore } from '../store/useUserStore'
 import Avatar from '../components/Avatar'
+import { useLanguageStore } from '../store/useLanguageStore'
+import { messages } from '../constants/messages'
 
 export default function Account() {
-  const user = useUserStore((state) => state.user) // Obtener el usuario del store
+  const user = useUserStore((state) => state.user)
   const [loading, setLoading] = useState(true)
   const [full_name, setFull_name] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
+  const language = useLanguageStore((state) => state.language)
+  const setLanguage = useLanguageStore((state) => state.setLanguage)
+  const t = messages[language]
 
   useEffect(() => {
     if (user) getProfile()
@@ -75,12 +80,29 @@ export default function Account() {
   }
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
+      {/* Language selector */}
       <View style={[styles.verticallySpaced, styles.mt20]}>
-        <Input label="Email" value={user?.email} disabled />
+        <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 4 }}>
+          <Button
+            title="Español"
+            type={language === 'es' ? 'solid' : 'outline'}
+            onPress={() => setLanguage('es')}
+            buttonStyle={{ marginRight: 8 }}
+          />
+          <Button
+            title="English"
+            type={language === 'en' ? 'solid' : 'outline'}
+            onPress={() => setLanguage('en')}
+          />
+        </View>
+      </View>
+
+      <View style={[styles.verticallySpaced, styles.mt20]}>
+        <Input label={t?.email || 'Email'} value={user?.email} disabled />
       </View>
       <View style={styles.verticallySpaced}>
-        <Input label="Username" value={full_name || ''} onChangeText={(text) => setFull_name(text)} />
+        <Input label={t?.username || 'Username'} value={full_name || ''} onChangeText={(text) => setFull_name(text)} />
       </View>
 
       <View>
@@ -92,21 +114,20 @@ export default function Account() {
             updateProfile({ full_name, avatar_url: url })
           }}
         />
-    </View>
+      </View>
 
       <View style={[styles.verticallySpaced, styles.mt20]}>
         <Button
-          title={loading ? 'Cargando ...' : 'Actualizar perfil'}
+          title={loading ? (t?.loading || 'Loading...') : (t?.updateProfile || 'Update profile')}
           onPress={() => updateProfile({ full_name, avatar_url: avatarUrl })}
           disabled={loading}
         />
       </View>
 
-
       <View style={styles.verticallySpaced}>
-        <Button title="Sign Out" onPress={() => supabase.auth.signOut()} />
+        <Button title={t?.signOut || 'Sign Out'} onPress={() => supabase.auth.signOut()} />
       </View>
-    </View>
+    </ScrollView>
   )
 }
 

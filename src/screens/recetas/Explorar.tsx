@@ -5,68 +5,70 @@ import { RootStackParamList } from '../../navigation/types';
 import { useRecetas } from '../../hooks/useRecetas';
 import RecetaItem from '../../components/RecetaItem';
 import { Ionicons } from '@expo/vector-icons';
+import { messages } from '../../constants/messages';
+import { useLanguageStore } from '../../store/useLanguageStore';
 
-export default function Explorar() {
+export default function Explore() {
   const navigation = useNavigation();
-  const { recetas, loading, fetchRecetasPublicas } = useRecetas();
+  const { recetas: recipes, loading, fetchRecetasPublicas: fetchPublicRecipes } = useRecetas();
   const [searchTerm, setSearchTerm] = useState('');
+  const language = useLanguageStore((state) => state.language);
+  const t = messages[language];
 
   useEffect(() => {
-    fetchRecetasPublicas();
+    fetchPublicRecipes();
   }, []);
 
-  const filteredRecetas = recetas.filter((receta) => {
+  const filteredRecipes = recipes.filter((recipe) => {
     if (!searchTerm) return true;
     const lower = searchTerm.toLowerCase();
-    // Buscar por título, descripción o nombre de ingrediente
-    const matchTitulo = receta.titulo?.toLowerCase().includes(lower);
-    const matchDescripcion = receta.descripcion?.toLowerCase().includes(lower);
-    const matchIngrediente = Array.isArray(receta.ingredientes)
-      ? receta.ingredientes.some((ing: any) => ing.nombre?.toLowerCase().includes(lower))
+    const matchTitle = recipe.titulo?.toLowerCase().includes(lower);
+    const matchDescription = recipe.descripcion?.toLowerCase().includes(lower);
+    const matchIngredient = Array.isArray(recipe.ingredientes)
+      ? recipe.ingredientes.some((ing: any) => ing.nombre?.toLowerCase().includes(lower))
       : false;
-    return matchTitulo || matchDescripcion || matchIngrediente;
+    return matchTitle || matchDescription || matchIngredient;
   });
 
-  // Navegación a InfoReceta dentro del stack de Explorar
-  const goToView = (item: any) => {
+  const goToRecipeInfo = (item: any) => {
     (navigation as any).navigate('InfoReceta', { receta: item });
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      <View style={{ marginHorizontal: 20, marginTop: 20, marginBottom: 10 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+    <View style={styles.container}>
+      <View style={styles.searchBarContainer}>
+        <View style={styles.searchRow}>
           <TextInput
-            placeholder="Buscar receta..."
+            placeholder={t.searchPlaceholder}
             value={searchTerm}
             onChangeText={setSearchTerm}
-            style={[styles.input, { flex: 1 }]}
+            style={[styles.input, styles.flex1]}
           />
           <Pressable
             onPress={() => (navigation as any).navigate('BuscarPorId')}
-            style={{ marginLeft: 10, backgroundColor: '#eee', borderRadius: 8, padding: 10 }}
-            accessibilityLabel="Buscar por ID"
+            style={styles.searchButton}
+            accessibilityLabel={t.searchById}
           >
             <Ionicons name="search" size={22} color="#333" />
           </Pressable>
         </View>
       </View>
-      {filteredRecetas.length === 0 ? (
-        <Text style={{ textAlign: 'center', marginTop: 40, color: '#888', fontSize: 16 }}>
-          No se encontraron recetas públicas
+      {filteredRecipes.length === 0 ? (
+        <Text style={styles.emptyText}>
+          {t.noPublicRecipes}
         </Text>
       ) : (
         <FlatList
-          style={{ marginTop: 10 }}
-          data={filteredRecetas}
+          style={styles.list}
+          data={filteredRecipes}
           keyExtractor={(item, index) => item.id || index.toString()}
           renderItem={({ item }) => (
-            <Pressable onPress={() => goToView(item)}>
+            <Pressable onPress={() => goToRecipeInfo(item)}>
               <RecetaItem item={item} />
             </Pressable>
           )}
           refreshing={loading}
-          onRefresh={fetchRecetasPublicas}
+          onRefresh={fetchPublicRecipes}
         />
       )}
     </View>
@@ -74,6 +76,9 @@ export default function Explorar() {
 }
 
 const styles = StyleSheet.create({
+  container: { flex: 1 },
+  searchBarContainer: { marginHorizontal: 20, marginTop: 20, marginBottom: 10 },
+  searchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
   input: {
     backgroundColor: '#fff',
     borderRadius: 8,
@@ -84,4 +89,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     elevation: 2,
   },
+  flex1: { flex: 1 },
+  searchButton: { marginLeft: 10, backgroundColor: '#eee', borderRadius: 8, padding: 10 },
+  emptyText: { textAlign: 'center', marginTop: 40, color: '#888', fontSize: 16 },
+  list: { marginTop: 10 },
 });
