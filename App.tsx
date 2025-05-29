@@ -4,6 +4,8 @@ import Auth from './src/screens/Auth'
 import { useUserStore } from './src/store/useUserStore'
 import MainTabs from './src/navigation/mainTabs'
 import { NavigationContainer } from '@react-navigation/native'
+import { AppFontProvider } from './src/components/AppFontProvider'
+import { ThemeProvider } from './src/hooks/useTheme'
 
 export default function App() {
   const user = useUserStore((state) => state.user) // Obtener el usuario del store
@@ -20,8 +22,12 @@ export default function App() {
   }, [])
 
   return (
-    <NavigationContainer>
-      {user ? <MainTabs /> : <Auth />}
-    </NavigationContainer>
+    <ThemeProvider>
+      <AppFontProvider>
+        <NavigationContainer>
+          {user ? <MainTabs /> : <Auth />}
+        </NavigationContainer>
+      </AppFontProvider>
+    </ThemeProvider>
   )
 }

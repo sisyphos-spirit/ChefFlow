@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { StyleSheet, View, Alert, Image, Button } from 'react-native'
+import { StyleSheet, View, Alert, Image } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import { useLanguageStore } from '../store/useLanguageStore'
 import { messages } from '../constants/messages'
+import { PrimaryButton } from './PrimaryButton'
+import { useTheme } from '../hooks/useTheme'
 
 interface Props {
   size: number
@@ -18,6 +20,8 @@ export default function Avatar({ url, size = 150, onUpload }: Props) {
 
   const language = useLanguageStore((state) => state.language)
   const t = messages[language]
+
+  const { colors } = useTheme()
 
   useEffect(() => {
     if (url) downloadImage(url)
@@ -94,18 +98,28 @@ export default function Avatar({ url, size = 150, onUpload }: Props) {
   }
 
   return (
-    <View>
+    <View style={{ alignItems: 'center', marginBottom: 16 }}>
       {avatarUrl ? (
         <Image
           source={{ uri: avatarUrl }}
           accessibilityLabel={t.avatar || 'Avatar'}
-          style={[avatarSize, styles.avatar, styles.image]}
+          style={[
+            avatarSize,
+            styles.avatar,
+            styles.image,
+            { backgroundColor: colors.secondary, borderColor: colors.primary },
+          ]}
         />
       ) : (
-        <View style={[avatarSize, styles.avatar, styles.noImage]} />
+        <View style={[
+          avatarSize,
+          styles.avatar,
+          styles.noImage,
+          { backgroundColor: colors.secondary, borderColor: colors.primary },
+        ]} />
       )}
-      <View>
-        <Button
+      <View style={{ marginTop: 12, width: '60%' }}>
+        <PrimaryButton
           title={uploading ? t.uploading || 'Subiendo ...' : t.uploadImage || 'Subir imagen'}
           onPress={uploadAvatar}
           disabled={uploading}

@@ -9,6 +9,8 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@expo-google-fonts/nunito": "^0.3.0",
+    "@expo-google-fonts/poppins": "^0.3.1",
     "@expo/metro-runtime": "~4.0.1",
     "@react-native-async-storage/async-storage": "1.23.1",
     "@react-navigation/bottom-tabs": "^7.3.10",
@@ -19,7 +21,9 @@
     "@rneui/themed": "^4.0.0-rc.8",
     "@supabase/supabase-js": "^2.49.4",
     "expo": "52",
+    "expo-app-loading": "^1.3.0",
     "expo-clipboard": "^7.1.4",
+    "expo-font": "^13.3.1",
     "expo-image-picker": "~16.0.6",
     "expo-router": "^4.0.20",
     "expo-status-bar": "~2.0.1",

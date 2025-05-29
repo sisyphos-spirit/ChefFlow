@@ -4,6 +4,8 @@ import { StyleSheet, View, Alert, Image, Text, TouchableOpacity } from 'react-na
 import * as ImagePicker from 'expo-image-picker'
 import { useLanguageStore } from '../store/useLanguageStore';
 import { messages } from '../constants/messages';
+import { useTheme } from '../hooks/useTheme';
+import { PrimaryButton } from './PrimaryButton';
 
 interface Props {
   size: number
@@ -92,33 +94,35 @@ export default function Img_receta({ url, size = 150, onUpload }: Props) {
 
   const language = useLanguageStore((state) => state.language);
   const t = messages[language];
+  const { colors } = useTheme();
 
   return (
-    <View>
+    <View style={{ alignItems: 'center', marginVertical: 20 }}>
       {imageUrl ? (
         <Image
           source={{ uri: imageUrl }}
-          accessibilityLabel="Imagen de la receta"
-          style={[imageSize, styles.image, styles.image2]}
+          accessibilityLabel={t.uploadImage || 'Imagen de la receta'}
+          style={[
+            imageSize,
+            styles.image,
+            styles.image2,
+            { backgroundColor: colors.secondary, borderColor: colors.primary },
+          ]}
         />
       ) : (
-        <View style={[imageSize, styles.image, styles.noImage]} />
+        <View style={[
+          imageSize,
+          styles.image,
+          styles.noImage,
+          { backgroundColor: colors.secondary, borderColor: colors.primary },
+        ]} />
       )}
-      <View>
-        <TouchableOpacity
+      <View style={{ marginTop: 12, width: '60%' }}>
+        <PrimaryButton
+          title={uploading ? t.uploading || 'Subiendo...' : t.uploadImage || 'Subir Imagen'}
           onPress={uploadImage}
           disabled={uploading}
-          style={{
-            backgroundColor: uploading ? '#ccc' : '#007BFF',
-            padding: 10,
-            borderRadius: 5,
-            alignItems: 'center',
-          }}
-        >
-          <Text style={{ color: '#fff', fontWeight: 'bold' }}>
-            {uploading ? t.uploading || 'Subiendo...' : t.uploadImage || 'Subir Imagen'}
-          </Text>
-        </TouchableOpacity>
+        />
       </View>
     </View>
   )

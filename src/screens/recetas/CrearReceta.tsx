@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { View, StyleSheet, Text, Pressable, Modal, TextInput, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
-import { Input, Button } from '@rneui/themed';
+import { AppInput } from '../../components/AppInput';
+import { SectionTitle } from '../../components/SectionTitle';
+import { PrimaryButton } from '../../components/PrimaryButton';
 import Img_receta from '../../components/Img_receta';
 import { useRecetas } from '../../hooks/useRecetas';
 import { useIngredientes } from '../../hooks/useIngredientes';
@@ -10,6 +12,8 @@ import { isEmpty, isPositiveNumber } from '../../utils/validation';
 import { showError } from '../../utils/alerts';
 import { useLanguageStore } from '../../store/useLanguageStore';
 import { messages } from '../../constants/messages';
+import { useTheme } from '../../hooks/useTheme';
+import { getGlobalStyles } from '../../constants/GlobalStyles';
 
 export default function CreateRecipe() {
   const [title, setTitle] = useState('');
@@ -29,6 +33,7 @@ export default function CreateRecipe() {
   const { ingredientes: ingredients, loading: loadingIngredients, fetchIngredientes: fetchIngredients } = useIngredientes();
   const language = useLanguageStore((state) => state.language);
   const t = messages[language];
+  const { colors } = useTheme();
 
   useEffect(() => {
     fetchIngredients();
@@ -94,9 +99,69 @@ export default function CreateRecipe() {
     setInputHeights((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const styles = getGlobalStyles(colors);
+
+  // Estilos locales para elementos no cubiertos por los estilos globales
+  const localStyles = StyleSheet.create({
+    dropdownContainer: { marginBottom: 20 },
+    dropdown: { marginBottom: 10 },
+    zIndex1000: { zIndex: 1000 },
+    dropDownContainer: { maxHeight: 200 },
+    modalContainer: 
+    { 
+      flex: 1, 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      backgroundColor: 'rgba(0, 0, 0, 0.5)' 
+    },
+    modalContent: 
+    { 
+      width: '80%', 
+      padding: 20, 
+      borderRadius: 10, 
+      alignItems: 'center' 
+    },
+    modalButtons: 
+    { 
+      flexDirection: 'row', 
+      justifyContent: 'space-between', 
+      width: '100%' 
+    },
+    ingredientItem: 
+    { 
+      flexDirection: 'row', 
+      justifyContent: 'space-between', 
+      marginVertical: 5 
+    },
+    removeText: {},
+    stepRow: 
+    { 
+      flexDirection: 'row', 
+      alignItems: 'center', 
+      marginBottom: 8 
+    },
+    removeStepButton: 
+    { 
+      marginLeft: 4, 
+      paddingHorizontal: 8, 
+      paddingVertical: 4, 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      minWidth: 60 
+    },
+    addStepButton: 
+    { 
+      marginTop: 10, 
+      padding: 10, 
+      alignItems: 'center', 
+      borderRadius: 5 
+    },
+    addStepText: { fontSize: 16 },
+  });
+
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1 }}
+      style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={80}
     >
@@ -105,12 +170,22 @@ export default function CreateRecipe() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={true}
       >
-        <Input label={t.createRecipe} value={title} onChangeText={setTitle} />
-        <Input label={t.description || 'Description'} value={description} onChangeText={setDescription} />
+        <AppInput
+          placeholder={t.title}
+          value={title}
+          onChangeText={setTitle}
+          style={styles.input}
+        />
+        <AppInput
+          placeholder={t.description || 'Description'}
+          value={description}
+          onChangeText={setDescription}
+          style={styles.input}
+        />
         <Img_receta size={200} url={imageUrl} onUpload={setImageUrl} />
 
-        <Text style={styles.sectionTitle}>{t.ingredients}</Text>
-        <View style={[styles.dropdownContainer, openDropdown ? styles.zIndex1000 : null]}>
+        <SectionTitle style={{ fontSize: 18, marginTop: 16 }}>{t.ingredients}</SectionTitle>
+        <View style={[localStyles.dropdownContainer, openDropdown ? localStyles.zIndex1000 : null]}>
           <DropDownPicker
             open={openDropdown}
             value={selectedIngredient?.id || null}
@@ -122,8 +197,7 @@ export default function CreateRecipe() {
             setOpen={setOpenDropdown}
             setValue={(callback) => {
               const value = callback(selectedIngredient?.id || null);
-              if (!value) return; // Ensure value is valid
-
+              if (!value) return;
               const ingredient = ingredients.find((ing) => ing.id === value);
               if (ingredient) {
                 openModal(ingredient);
@@ -133,50 +207,61 @@ export default function CreateRecipe() {
             searchable
             searchPlaceholder={t.searchIngredient}
             onChangeSearchText={setSearchValue}
-            style={styles.dropdown}
-            dropDownContainerStyle={styles.dropDownContainer}
+            style={[
+              localStyles.dropdown,
+              { backgroundColor: colors.secondary, borderColor: colors.primary },
+            ]}
+            dropDownContainerStyle={[
+              localStyles.dropDownContainer,
+              { backgroundColor: colors.secondary, borderColor: colors.primary },
+            ]}
             listMode="SCROLLVIEW"
-            scrollViewProps={{
-              nestedScrollEnabled: true,
-            }}
+            scrollViewProps={{ nestedScrollEnabled: true }}
+            textStyle={{ color: colors.text }}
+            placeholderStyle={{ color: colors.placeholder }}
+            searchContainerStyle={{ backgroundColor: colors.secondary }}
+            searchTextInputStyle={{ color: colors.text, backgroundColor: colors.secondary, borderColor: colors.primary }}
+            selectedItemContainerStyle={{ backgroundColor: colors.primary + '22' }}
+            selectedItemLabelStyle={{ color: colors.primary, fontWeight: 'bold' }}
           />
         </View>
 
         <Modal visible={isModalVisible} transparent animationType="slide">
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>{t.addQuantity}</Text>
-              <Text>{selectedIngredient?.nombre || ''} ({selectedIngredient?.unidad || ''})</Text>
-              <TextInput
+          <View style={localStyles.modalContainer}>
+            <View style={[localStyles.modalContent, { backgroundColor: colors.secondary }]}> 
+              <SectionTitle style={{ fontSize: 16 }}>{t.addQuantity}</SectionTitle>
+              <Text style={{ color: colors.text }}>{selectedIngredient?.nombre || ''} ({selectedIngredient?.unidad || ''})</Text>
+              <AppInput
                 style={styles.input}
                 keyboardType="numeric"
                 placeholder={t.amount}
+                placeholderTextColor={colors.placeholder}
                 value={amount}
                 onChangeText={setAmount}
               />
-              <View style={styles.modalButtons}>
-                <Button title={t.cancel} onPress={closeModal} />
-                <Button title={t.add} onPress={addIngredient} />
+              <View style={localStyles.modalButtons}>
+                <PrimaryButton title={t.cancel} onPress={closeModal} style={{ backgroundColor: colors.accent, flex: 1, marginRight: 8 }} textStyle={{ color: colors.text }} />
+                <PrimaryButton title={t.add} onPress={addIngredient} style={{ backgroundColor: colors.primary, flex: 1 }} textStyle={{ color: colors.text }} />
               </View>
             </View>
           </View>
         </Modal>
 
         {selectedIngredients.map((ing, index) => (
-          <View key={index} style={styles.ingredientItem}>
-            <Text>{ing.nombre || ''} - {ing.cantidad || ''} {ing.unidad || ''}</Text>
+          <View key={index} style={localStyles.ingredientItem}>
+            <Text style={{ color: colors.text }}>{ing.nombre || ''} - {ing.cantidad || ''} {ing.unidad || ''}</Text>
             <Pressable onPress={() => removeIngredient(ing.id)}>
-              <Text style={styles.removeText}>{t.remove}</Text>
+              <Text style={[localStyles.removeText, { color: colors.accent }]}>{t.remove}</Text>
             </Pressable>
           </View>
         ))}
 
-        <Text style={styles.sectionTitle}>{t.steps}</Text>
+        <SectionTitle style={{ fontSize: 18, marginTop: 16 }}>{t.steps}</SectionTitle>
         {steps.map((step, index) => (
-          <View key={index} style={styles.stepRow}>
+          <View key={index} style={localStyles.stepRow}>
             <View style={{ flex: 1 }}>
-              <Input
-                label={`${t.step} ${index + 1}`}
+              <AppInput
+                placeholder={`${t.step} ${index + 1}`}
                 value={step}
                 onChangeText={(text) => {
                   const updatedSteps = [...steps];
@@ -184,7 +269,7 @@ export default function CreateRecipe() {
                   setSteps(updatedSteps);
                 }}
                 multiline
-                style={[styles.stepInput, { height: inputHeights[index] || 40 }]}
+                style={[styles.input, { height: inputHeights[index] || 40 }]}
                 onContentSizeChange={(event) => {
                   const updatedHeights = [...inputHeights];
                   updatedHeights[index] = event.nativeEvent.contentSize.height;
@@ -192,54 +277,23 @@ export default function CreateRecipe() {
                 }}
               />
             </View>
-            <Pressable onPress={() => removeStep(index)} style={styles.removeStepButton}>
-              <Text style={styles.removeText}>{t.remove || 'Eliminar'}</Text>
+            <Pressable onPress={() => removeStep(index)} style={localStyles.removeStepButton}>
+              <Text style={[localStyles.removeText, { color: colors.accent, fontWeight: 'bold' }]}>{t.remove || 'Eliminar'}</Text>
             </Pressable>
           </View>
         ))}
-        <Pressable onPress={() => setSteps([...steps, ''])} style={styles.addStepButton}>
-          <Text style={styles.addStepText}>{t.addStep}</Text>
+        <Pressable onPress={() => setSteps([...steps, ''])} style={[localStyles.addStepButton, { backgroundColor: colors.accent }]}> 
+          <Text style={[localStyles.addStepText, { color: colors.text }]}>{t.addStep}</Text>
         </Pressable>
 
-        <Button
+        <PrimaryButton
           title={t.createRecipe}
           onPress={onSubmit}
           disabled={loadingIngredients || !title || !description || !imageUrl || steps.length === 0 || selectedIngredients.length === 0}
+          style={{ marginTop: 20 }}
+          textStyle={{ color: colors.text }}
         />
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
-  scrollContent: { paddingBottom: 40, paddingHorizontal: 20 },
-  sectionTitle: { fontSize: 20, fontWeight: 'bold', marginVertical: 10 },
-  dropdownContainer: { marginBottom: 20 },
-  dropdown: { marginBottom: 10 },
-  zIndex1000: { zIndex: 1000 },
-  dropDownContainer: { maxHeight: 200 },
-  modalContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.5)' },
-  modalContent: { width: '80%', backgroundColor: 'white', padding: 20, borderRadius: 10, alignItems: 'center' },
-  modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
-  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 5, padding: 10, width: '100%', marginVertical: 10 },
-  modalButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
-  ingredientItem: { flexDirection: 'row', justifyContent: 'space-between', marginVertical: 5 },
-  removeText: { color: 'red' },
-  stepInput: {},
-  addStepButton: { marginTop: 10, padding: 10, backgroundColor: '#ddd', alignItems: 'center', borderRadius: 5 },
-  addStepText: { fontSize: 16, color: '#000' },
-  stepRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  removeStepButton: {
-    marginLeft: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
-    minWidth: 60,
-  },
-});

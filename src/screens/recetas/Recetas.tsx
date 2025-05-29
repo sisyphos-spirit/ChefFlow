@@ -1,4 +1,4 @@
-import { View, Text, FlatList, Pressable, TextInput, StyleSheet } from 'react-native'
+import { View, Text, FlatList, Pressable, StyleSheet } from 'react-native'
 import { useUserStore } from '../../store/useUserStore'
 import { useEffect, useState } from 'react'
 import { Button } from '@rneui/themed'
@@ -9,6 +9,10 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/types';
 import { useLanguageStore } from '../../store/useLanguageStore';
 import { messages } from '../../constants/messages';
+import { useTheme } from '../../hooks/useTheme';
+import { getGlobalStyles } from '../../constants/GlobalStyles';
+import { PrimaryButton } from '../../components/PrimaryButton';
+import { AppInput } from '../../components/AppInput';
 
 export default function Recipes() {
   type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'ListaRecetas'>;
@@ -19,6 +23,50 @@ export default function Recipes() {
   const [searchTerm, setSearchTerm] = useState('');
   const language = useLanguageStore((state) => state.language);
   const t = messages[language];
+  const { colors } = useTheme();
+  const styles = getGlobalStyles(colors);
+  const localStyles = StyleSheet.create({
+    searchBarContainer: {
+      marginHorizontal: 30,
+      marginTop: 20,
+    },
+    floatingButtonContainer: {
+      position: 'absolute',
+      bottom: 30,
+      right: 24,
+      zIndex: 10,
+    },
+    floatingButton: {
+      minWidth: 48,
+      minHeight: 48,
+      borderRadius: 24,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      backgroundColor: colors.primary,
+      elevation: 4,
+      justifyContent: 'center',
+      alignItems: 'center',
+      // Shadow for iOS
+      shadowColor: colors.primary,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.2,
+      shadowRadius: 4,
+    },
+    floatingButtonText: {
+      color: colors.text,
+      fontSize: 16,
+    },
+    emptyText: {
+      textAlign: 'center',
+      marginTop: 40,
+      fontSize: 16,
+      color: colors.placeholder,
+      fontFamily: 'Nunito-Regular',
+    },
+    list: {
+      marginTop: 5,
+    },
+  });
 
   useEffect(() => {
     if (user) fetchRecipes();
@@ -57,69 +105,52 @@ export default function Recipes() {
       {user ? (
         <>
           {/* Buscador de recetas */}
-          <View style={styles.searchBarContainer}>
-            <TextInput
+          <View style={localStyles.searchBarContainer}>
+            <AppInput
               placeholder={t.searchPlaceholder}
               value={searchTerm}
               onChangeText={setSearchTerm}
-              style={styles.searchBar}
+              style={styles.input}
+              placeholderTextColor={colors.placeholder}
               clearButtonMode="while-editing"
               autoCorrect={false}
               autoCapitalize="none"
               returnKeyType="search"
             />
           </View>
-          {/* Formulario para crear una nueva receta */}
-          <View style={styles.createButtonContainer}>
-            <Button
-              title={t.createRecipe}
-              onPress={goToRecipeCreate}
-              buttonStyle={styles.createButton}
-            />
-          </View>
-
           {/* Lista de recetas */}
           {filteredRecipes.length === 0 ? (
-            <Text style={styles.emptyText}>
+            <Text style={localStyles.emptyText}>
               {t.noRecipes}
             </Text>
           ) : (
             <FlatList
-              style={styles.list}
-              data={filteredRecipes} // Usar recetas filtradas
-              keyExtractor={(item, index) => item.id || index.toString()} // Asegúrate de que la clave sea única
+              style={localStyles.list}
+              data={filteredRecipes}
+              keyExtractor={(item, index) => item.id || index.toString()}
               renderItem={({ item }) => (
                 <Pressable onPress={() => goToRecipeInfo(item)}>
                   <RecetaItem item={item} />
                 </Pressable>
               )}
-              refreshing={loading} // Indica si está cargando
-              onRefresh={fetchRecipes} // Llama a la función para actualizar las recetas
+              refreshing={loading}
+              onRefresh={fetchRecipes}
+              contentContainerStyle={{ paddingBottom: 100 }} // Prevents FAB overlap
             />
           )}
+          {/* Botón flotante para crear receta */}
+          <View style={localStyles.floatingButtonContainer} pointerEvents="box-none">
+            <PrimaryButton
+              title={t.createRecipe}
+              onPress={goToRecipeCreate}
+              style={localStyles.floatingButton}
+              textStyle={localStyles.floatingButtonText}
+            />
+          </View>
         </>
       ) : (
-        <Text>{t.pleaseLogin}</Text>
+        <Text style={styles.textPrimary}>{t.pleaseLogin}</Text>
       )}
     </View>
   )
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  searchBarContainer: { marginHorizontal: 20, marginTop: 20, marginBottom: 10 },
-  searchBar: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    fontSize: 16,
-    elevation: 2,
-  },
-  createButtonContainer: { marginBottom: -35 },
-  createButton: { backgroundColor: '#007BFF' },
-  emptyText: { textAlign: 'center', marginTop: 40, color: '#888', fontSize: 16 },
-  list: { marginTop: 60 },
-});

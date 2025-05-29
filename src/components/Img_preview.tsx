@@ -4,6 +4,7 @@ import { StyleSheet, View, Alert, Image, Button } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import { useLanguageStore } from '../store/useLanguageStore';
 import { messages } from '../constants/messages';
+import { useTheme } from '../hooks/useTheme';
 
 interface Props {
   size: number
@@ -41,6 +42,7 @@ export default function Img_preview({ url, size = 150, onUpload }: Props) {
 
   const language = useLanguageStore((state) => state.language);
   const t = messages[language];
+  const { colors } = useTheme();
 
   return (
     <View>
@@ -51,9 +53,14 @@ export default function Img_preview({ url, size = 150, onUpload }: Props) {
           style={[imageSize, styles.image, styles.image2]}
         />
       ) : (
-        <View style={[imageSize, styles.image, styles.noImage]}>
-          <View style={{flex:1, justifyContent:'center', alignItems:'center'}}>
-            <Button title={t.noImage || 'Sin imagen'} disabled />
+        <View style={[
+          imageSize,
+          styles.image,
+          styles.noImage,
+          { backgroundColor: colors.secondary, borderColor: colors.primary },
+        ]}>
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <Button title={t.noImage || 'Sin imagen'} disabled color={colors.primary} />
           </View>
         </View>
       )}
@@ -72,7 +79,6 @@ const styles = StyleSheet.create({
     paddingTop: 0,
   },
   noImage: {
-    backgroundColor: '#333',
     borderWidth: 1,
     borderStyle: 'solid',
     borderColor: 'rgb(200, 200, 200)',

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, StyleSheet, Text, Modal, TextInput } from 'react-native';
+import { View, ScrollView, StyleSheet, Text, Modal, TextInput, Pressable } from 'react-native';
 import { Input, Button } from '@rneui/themed';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -13,6 +13,11 @@ import { isEmpty, isPositiveNumber } from '../../utils/validation';
 import { showError, showSuccess } from '../../utils/alerts';
 import { useLanguageStore } from '../../store/useLanguageStore';
 import { messages } from '../../constants/messages';
+import { useTheme } from '../../hooks/useTheme';
+import { AppInput } from '../../components/AppInput';
+import { SectionTitle } from '../../components/SectionTitle';
+import { PrimaryButton } from '../../components/PrimaryButton';
+import { getGlobalStyles } from '../../constants/GlobalStyles';
 
 export default function EditRecipe() {
   const route = useRoute<RouteProp<RootStackParamList, 'EditarReceta'>>();
@@ -35,6 +40,27 @@ export default function EditRecipe() {
 
   const language = useLanguageStore((state) => state.language);
   const t = messages[language];
+  const { colors } = useTheme();
+  const styles = getGlobalStyles(colors);
+  const localStyles = StyleSheet.create({
+    container: { marginHorizontal: 25, padding: 10, borderWidth: 1, borderRadius: 5, backgroundColor: colors.secondary, borderColor: colors.primary },
+    scrollContainer: { flexGrow: 1 },
+    sectionContainer: { marginTop: 20 },
+    sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
+    dropdownContainer: { marginBottom: 20 },
+    zIndex1000: { zIndex: 1000 },
+    dropDownContainer: { maxHeight: 200 },
+    modalContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.5)' },
+    modalContent: { width: '80%', padding: 20, borderRadius: 10, alignItems: 'center' },
+    modalButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
+    ingredienteItem: { flexDirection: 'row', justifyContent: 'space-between', marginVertical: 5, alignItems: 'center' },
+    removeText: {},
+    stepRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+    removeStepButton: { marginLeft: 4, paddingHorizontal: 8, paddingVertical: 4, justifyContent: 'center', alignItems: 'center', minWidth: 60 },
+    addStepButton: { marginTop: 10, padding: 10, alignItems: 'center', borderRadius: 5 },
+    addStepText: { fontSize: 16 },
+    dropdown: { marginBottom: 10 },
+  });
 
   useEffect(() => {
     fetchIngredients();
@@ -124,38 +150,46 @@ export default function EditRecipe() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollContainer}>
-      <View style={styles.container}>
-        <Input label={t.editRecipe} value={title} onChangeText={setTitle} />
-        <Input label={t.description || 'Description'} value={description} onChangeText={setDescription} />
+    <ScrollView contentContainerStyle={styles.scrollContent}>
+      <View>
+        <AppInput
+          placeholder={t.editRecipe}
+          value={title}
+          onChangeText={setTitle}
+          style={styles.input}
+        />
+        <AppInput
+          placeholder={t.description || 'Description'}
+          value={description}
+          onChangeText={setDescription}
+          style={styles.input}
+        />
         <Img_receta size={200} url={imageUrl} onUpload={setImageUrl} />
 
-        <View style={styles.sectionContainer}>
-          <Button title="Añadir Paso" onPress={handleAddStep} />
-          {steps.map((step, index) => (
-            <View key={index} style={styles.stepRow}>
-              <View style={{ flex: 1 }}>
-                <Input
-                  label={`Paso ${index + 1}`}
-                  value={step}
-                  onChangeText={(text) => handleUpdateStep(index, text)}
-                  multiline
-                  style={[styles.stepInput]}
-                />
-              </View>
-              <Button
-                title="Eliminar"
-                onPress={() => handleRemoveStep(index)}
-                type="clear"
-                titleStyle={styles.deleteText}
-                buttonStyle={styles.removeStepButton}
+        <SectionTitle style={{ fontSize: 18, marginTop: 16 }}>{t.steps}</SectionTitle>
+        {steps.map((step, index) => (
+          <View key={index} style={localStyles.stepRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: colors.text, fontWeight: 'bold', marginBottom: 4 }}>{`${t.step} ${index + 1}`}</Text>
+              <AppInput
+                placeholder={t.step}
+                value={step}
+                onChangeText={(text) => handleUpdateStep(index, text)}
+                multiline
+                style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
               />
             </View>
-          ))}
-        </View>
+            <Pressable onPress={() => handleRemoveStep(index)} style={localStyles.removeStepButton}>
+              <Text style={[localStyles.removeText, { color: colors.accent, fontWeight: 'bold' }]}>{t.remove || 'Eliminar'}</Text>
+            </Pressable>
+          </View>
+        ))}
+        <Pressable onPress={handleAddStep} style={[localStyles.addStepButton, { backgroundColor: colors.accent }]}> 
+          <Text style={[localStyles.addStepText, { color: colors.text }]}>{t.addStep}</Text>
+        </Pressable>
 
-        <Text style={styles.sectionTitle}>Ingredientes</Text>
-        <View style={styles.dropdownContainer}>
+        <SectionTitle style={{ fontSize: 18, marginTop: 16 }}>{t.ingredients}</SectionTitle>
+        <View style={[localStyles.dropdownContainer, openDropdown ? localStyles.zIndex1000 : null]}>
           <DropDownPicker
             open={openDropdown}
             value={selectedIngredient?.id || null}
@@ -175,81 +209,61 @@ export default function EditRecipe() {
             }}
             setItems={() => {}}
             searchable
-            searchPlaceholder="Buscar ingrediente..."
+            searchPlaceholder={t.searchIngredient}
             onChangeSearchText={setSearchValue}
-            style={[styles.dropdown, styles.zIndex1000]}
-            dropDownContainerStyle={styles.dropDownContainer}
+            style={[
+              localStyles.dropdown,
+              { backgroundColor: colors.secondary, borderColor: colors.primary },
+            ]}
+            dropDownContainerStyle={[
+              localStyles.dropDownContainer,
+              { backgroundColor: colors.secondary, borderColor: colors.primary },
+            ]}
             listMode="SCROLLVIEW"
-            scrollViewProps={{
-              nestedScrollEnabled: true,
-            }}
+            scrollViewProps={{ nestedScrollEnabled: true }}
+            textStyle={{ color: colors.text }}
+            placeholderStyle={{ color: colors.placeholder }}
+            searchContainerStyle={{ backgroundColor: colors.secondary }}
+            searchTextInputStyle={{ color: colors.text, backgroundColor: colors.secondary, borderColor: colors.primary }}
+            selectedItemContainerStyle={{ backgroundColor: colors.primary + '22' }}
+            selectedItemLabelStyle={{ color: colors.primary, fontWeight: 'bold' }}
           />
         </View>
         <Modal visible={isModalVisible} transparent animationType="slide">
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Añadir cantidad</Text>
-              <Text>{selectedIngredient?.nombre || ''} ({selectedIngredient?.unidad || ''})</Text>
-              <TextInput
+          <View style={localStyles.modalContainer}>
+            <View style={[localStyles.modalContent, { backgroundColor: colors.secondary }]}> 
+              <SectionTitle style={{ fontSize: 16 }}>{t.addQuantity}</SectionTitle>
+              <Text style={{ color: colors.text }}>{selectedIngredient?.nombre || ''} ({selectedIngredient?.unidad || ''})</Text>
+              <AppInput
                 style={styles.input}
                 keyboardType="numeric"
-                placeholder="Cantidad"
+                placeholder={t.amount}
+                placeholderTextColor={colors.placeholder}
                 value={amount}
                 onChangeText={setAmount}
               />
-              <View style={styles.modalButtons}>
-                <Button title="Cancelar" onPress={closeModal} />
-                <Button title="Añadir" onPress={addIngredient} />
+              <View style={localStyles.modalButtons}>
+                <PrimaryButton title={t.cancel} onPress={closeModal} style={{ backgroundColor: colors.accent, flex: 1, marginRight: 8 }} textStyle={{ color: colors.text }} />
+                <PrimaryButton title={t.add} onPress={addIngredient} style={{ backgroundColor: colors.primary, flex: 1 }} textStyle={{ color: colors.text }} />
               </View>
             </View>
           </View>
         </Modal>
         {ingredients.map((ing, index) => (
-          <View key={index} style={styles.ingredienteItem}>
-            <Text>{ing.nombre || ''} - {('cantidad' in ing ? ing.cantidad : '')} {ing.unidad || ''}</Text>
-            <Button title="Eliminar" onPress={() => removeIngredient(ing.id)} type="clear" titleStyle={styles.deleteText} />
+          <View key={index} style={localStyles.ingredienteItem}>
+            <Text style={{ color: colors.text }}>{ing.nombre || ''} - {('cantidad' in ing ? ing.cantidad : '')} {ing.unidad || ''}</Text>
+            <Pressable onPress={() => removeIngredient(ing.id)}>
+              <Text style={[localStyles.removeText, { color: colors.accent }]}>{t.remove}</Text>
+            </Pressable>
           </View>
         ))}
-        <Button
-          title="Guardar Cambios"
+        <PrimaryButton
+          title={t.saveChanges || 'Guardar Cambios'}
           onPress={handleSave}
-          buttonStyle={styles.saveButton}
+          style={{ marginTop: 20 }}
+          textStyle={{ color: colors.text }}
         />
       </View>
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  scrollContainer: { flexGrow: 1 },
-  container: { marginHorizontal: 25, padding: 10, borderWidth: 1, borderRadius: 5 },
-  sectionContainer: { marginTop: 20 },
-  pasoContainer: { marginBottom: 10 },
-  sectionTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 10 },
-  dropdownContainer: { zIndex: 1000, flex: 1, marginBottom: 20 },
-  zIndex1000: { zIndex: 1000 },
-  dropDownContainer: { zIndex: 1000, maxHeight: 200 },
-  modalContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.5)' },
-  modalContent: { width: '80%', backgroundColor: 'white', padding: 20, borderRadius: 10, alignItems: 'center' },
-  modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
-  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 5, padding: 10, width: '100%', marginVertical: 10 },
-  modalButtons: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
-  ingredienteItem: { flexDirection: 'row', justifyContent: 'space-between', marginVertical: 5, alignItems: 'center' },
-  deleteText: { color: 'red' },
-  saveButton: { backgroundColor: 'green', marginTop: 20 },
-  dropdown: { marginBottom: 10 },
-  stepRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  removeStepButton: {
-    marginLeft: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
-    minWidth: 60,
-  },
-  stepInput: {},
-});

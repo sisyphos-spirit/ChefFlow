@@ -7,6 +7,7 @@ import { isEmpty } from '../../utils/validation';
 import { showError } from '../../utils/alerts';
 import { useLanguageStore } from '../../store/useLanguageStore';
 import { messages } from '../../constants/messages';
+import { useTheme } from '../../hooks/useTheme';
 
 export default function SearchById() {
   const [recipeId, setRecipeId] = useState('');
@@ -14,6 +15,7 @@ export default function SearchById() {
   const { recetas: recipes, fetchRecetas: fetchRecipes } = useRecetas();
   const language = useLanguageStore((state) => state.language);
   const t = messages[language];
+  const { colors } = useTheme();
 
   // Buscar receta por id directamente en la base de datos usando el nombre real del campo
   const fetchRecipeById = async (id: string) => {
@@ -62,17 +64,18 @@ export default function SearchById() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.label}>{t.pasteRecipeId}</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Text style={[styles.label, { color: colors.text }]}>{t.pasteRecipeId}</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, { backgroundColor: colors.secondary, borderColor: colors.primary, color: colors.text }]}
         value={recipeId}
         onChangeText={setRecipeId}
         placeholder={t.recipeId}
+        placeholderTextColor={colors.placeholder}
         autoCapitalize="none"
         autoCorrect={false}
       />
-      <Button title={t.searchRecipe} onPress={handleSearch} />
+      <Button title={t.searchRecipe} onPress={handleSearch} color={colors.primary} />
     </View>
   );
 }
@@ -83,7 +86,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#fff',
   },
   label: {
     fontSize: 18,
@@ -92,11 +94,9 @@ const styles = StyleSheet.create({
   input: {
     width: '100%',
     borderWidth: 1,
-    borderColor: '#ccc',
     borderRadius: 8,
     padding: 10,
     marginBottom: 20,
     fontSize: 16,
-    backgroundColor: '#f9f9f9',
   },
 });

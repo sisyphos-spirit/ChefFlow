@@ -74,6 +74,13 @@ export const messages = {
     recipeImage: 'Recipe image',
     noImage: 'No image',
     avatar: 'Avatar',
+    myRecipes: 'My Recipes',
+    explore: 'Explore',
+    profile: 'Profile',
+    viewRecipe: 'View Recipe',
+    lightTheme: 'Light',
+    darkTheme: 'Dark',
+    title: 'Title',
   },
   es: {
     searchPlaceholder: 'Buscar receta...',
@@ -150,6 +157,13 @@ export const messages = {
     recipeImage: 'Imagen de la receta',
     noImage: 'Sin imagen',
     avatar: 'Avatar',
+    myRecipes: 'Mis Recetas',
+    explore: 'Explorar',
+    profile: 'Perfil',
+    viewRecipe: 'Ver Receta',
+    lightTheme: 'Claro',
+    darkTheme: 'Oscuro',
+    title: 'Título',
   },
 };
 

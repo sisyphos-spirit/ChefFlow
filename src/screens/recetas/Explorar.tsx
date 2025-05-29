@@ -7,6 +7,7 @@ import RecetaItem from '../../components/RecetaItem';
 import { Ionicons } from '@expo/vector-icons';
 import { messages } from '../../constants/messages';
 import { useLanguageStore } from '../../store/useLanguageStore';
+import { useTheme } from '../../hooks/useTheme';
 
 export default function Explore() {
   const navigation = useNavigation();
@@ -14,6 +15,7 @@ export default function Explore() {
   const [searchTerm, setSearchTerm] = useState('');
   const language = useLanguageStore((state) => state.language);
   const t = messages[language];
+  const { colors } = useTheme();
 
   useEffect(() => {
     fetchPublicRecipes();
@@ -35,26 +37,27 @@ export default function Explore() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}> 
       <View style={styles.searchBarContainer}>
         <View style={styles.searchRow}>
           <TextInput
             placeholder={t.searchPlaceholder}
             value={searchTerm}
             onChangeText={setSearchTerm}
-            style={[styles.input, styles.flex1]}
+            style={[styles.input, styles.flex1, { backgroundColor: colors.secondary, borderColor: colors.primary, color: colors.text }]}
+            placeholderTextColor={colors.placeholder}
           />
           <Pressable
             onPress={() => (navigation as any).navigate('BuscarPorId')}
-            style={styles.searchButton}
+            style={[styles.searchButton, { backgroundColor: colors.accent }]}
             accessibilityLabel={t.searchById}
           >
-            <Ionicons name="search" size={22} color="#333" />
+            <Ionicons name="search" size={22} color={colors.text} />
           </Pressable>
         </View>
       </View>
       {filteredRecipes.length === 0 ? (
-        <Text style={styles.emptyText}>
+        <Text style={[styles.emptyText, { color: colors.placeholder }]}>
           {t.noPublicRecipes}
         </Text>
       ) : (
@@ -80,17 +83,15 @@ const styles = StyleSheet.create({
   searchBarContainer: { marginHorizontal: 20, marginTop: 20, marginBottom: 10 },
   searchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
   input: {
-    backgroundColor: '#fff',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#ccc',
     paddingHorizontal: 15,
     paddingVertical: 10,
     fontSize: 16,
     elevation: 2,
   },
   flex1: { flex: 1 },
-  searchButton: { marginLeft: 10, backgroundColor: '#eee', borderRadius: 8, padding: 10 },
-  emptyText: { textAlign: 'center', marginTop: 40, color: '#888', fontSize: 16 },
+  searchButton: { marginLeft: 10, borderRadius: 8, padding: 10 },
+  emptyText: { textAlign: 'center', marginTop: 40, fontSize: 16 },
   list: { marginTop: 10 },
 });
