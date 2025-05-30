@@ -1,19 +1,37 @@
-# Proyecto Final DAM: ChefFlow
+# ChefFlow
+
+> Aplicación móvil multiplataforma para la gestión y exploración de recetas culinarias.
+
+## Tabla de contenidos
+
+- [Descripción](#descripción)
+- [Características](#características-principales)
+- [Estructura del Proyecto](#estructura-del-proyecto)
+- [Instalación y Ejecución](#instalación-y-ejecución)
+- [Uso de la Aplicación](#uso-de-la-aplicación)
+- [Tecnologías Utilizadas](#tecnologías-utilizadas)
+- [Estructura de la Base de Datos](#estructura-de-la-base-de-datos)
+- [Autor](#autor)
+- [Licencia](#licencia)
+
+---
 
 ## Descripción
 
-Este proyecto es una aplicación móvil multiplataforma desarrollada con React Native, orientada a la gestión de recetas culinarias. Permite a los usuarios crear, editar, eliminar, explorar y compartir recetas, así como consultar información nutricional detallada de cada plato. La aplicación utiliza Supabase como backend para la gestión de datos y autenticación de usuarios.
+ChefFlow es una aplicación móvil desarrollada con React Native orientada a la gestión integral de recetas culinarias. Permite a los usuarios crear, editar, eliminar, explorar y compartir recetas, además de calcular información nutricional y gestionar ingredientes de forma sencilla.
+
+---
 
 ## Características principales
 
-- **Autenticación de usuarios**: Registro e inicio de sesión seguro.
+- **Autenticación segura**: Registro e inicio de sesión mediante email y contraseña.
 - **Gestión de recetas**: Crear, editar, eliminar y visualizar recetas propias.
-- **Exploración pública**: Buscar y explorar recetas públicas de otros usuarios.
-- **Búsqueda avanzada**: Filtrado de recetas por título, descripción o ingredientes.
-- **Gestión de ingredientes**: Selección y gestión de ingredientes con unidades y cantidades.
-- **Cálculo nutricional**: Visualización de valores nutricionales (calorías, proteínas, grasas, carbohidratos) por receta.
-- **Soporte multilenguaje**: Español e inglés.
-- **Interfaz moderna y adaptable**: Temas claro y oscuro, diseño _responsive_ y accesible.
+- **Exploración pública**: Buscar y explorar recetas de otros usuarios.
+- **Búsqueda avanzada**: Filtrar recetas por título, descripción o ingredientes.
+- **Gestión de ingredientes**: Seleccionar y manejar ingredientes con unidades y cantidades.
+- **Cálculo nutricional**: Ver valores nutricionales (calorías, proteínas, grasas, carbohidratos).
+- **Soporte multilenguaje**: Disponible en español e inglés.
+- **Interfaz moderna**: Temas claro/oscuro, diseño responsive y accesibilidad.
 
 ## Estructura del proyecto
 
@@ -33,6 +51,8 @@ GRPC/
 └── android/                # Proyecto nativo Android
 ```
 
+---
+
 ## Instalación y ejecución
 
 ### Requisitos previos
@@ -44,21 +64,23 @@ GRPC/
 ### Pasos para ejecutar el proyecto
 
 1. **Clonar el repositorio**
-   ```powershell
+   ```bash
    git clone <URL_DEL_REPOSITORIO>
    cd GRPC
    ```
 2. **Instalar dependencias**
-   ```powershell
+   ```bash
    npm install
    ```
 3. **Configurar variables de entorno**
    - Revisar `src/lib/supabase.ts` y asegurarse de que las claves de Supabase sean válidas.
 4. **Ejecutar la app en modo desarrollo**
-   ```powershell
+   ```bash
    npx expo start
    ```
    - Escanear el QR con la app Expo Go o lanzar en un emulador Android/iOS.
+
+---
 
 ## Uso de la aplicación
 
@@ -68,6 +90,8 @@ GRPC/
 - **Visualización de detalles**: Consulta ingredientes, pasos y valores nutricionales de cada receta.
 - **Cambio de idioma y tema**: Desde el perfil puedes alternar entre español/inglés y tema claro/oscuro.
 
+---
+
 ## Tecnologías utilizadas
 
 - **Frontend**: React Native, TypeScript
@@ -76,12 +100,16 @@ GRPC/
 - **UI**: @rneui/themed, estilos personalizados
 - **Otras**: Expo, react-navigation, react-native-dropdown-picker
 
-## Estructura de la base de datos (Supabase)
+---
+
+## Estructura de la base de datos
 
 - **Usuarios**: Autenticación gestionada por Supabase Auth.
 - **Recetas**: Tabla principal con campos como `id_receta`, `id_usuario`, `titulo`, `descripcion`, `imagen_url`, `pasos`, `publicada`, `fecha_creacion`.
 - **Ingredientes**: Tabla de ingredientes base y tabla intermedia `receta_ingredientes` para asociar ingredientes y cantidades a cada receta.
 - **Conversiones**: Tabla para conversión de unidades a gramos.
+
+---
 
 ## Buenas prácticas y consideraciones
 
@@ -91,10 +119,14 @@ GRPC/
 - Internacionalización y soporte de temas.
 - Uso de hooks personalizados para acceso a datos y lógica de negocio.
 
+---
+
 ## Autor
 
 - José Manuel Muñoz Ros
 
 ---
 
-**Este proyecto es parte del módulo de Desarrollo de Aplicaciones Multiplataforma (DAM).**
+## Licencia
+
+Este proyecto está bajo la licencia [Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/deed.es).  
