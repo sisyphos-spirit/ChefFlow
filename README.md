@@ -1,4 +1,4 @@
-# Proyecto Final DAM: Gestor de Recetas Multiplataforma
+# Proyecto Final DAM: ChefFlow
 
 ## Descripción
 
@@ -13,7 +13,7 @@ Este proyecto es una aplicación móvil multiplataforma desarrollada con React N
 - **Gestión de ingredientes**: Selección y gestión de ingredientes con unidades y cantidades.
 - **Cálculo nutricional**: Visualización de valores nutricionales (calorías, proteínas, grasas, carbohidratos) por receta.
 - **Soporte multilenguaje**: Español e inglés.
-- **Interfaz moderna y adaptable**: Temas claro y oscuro, diseño responsive y accesible.
+- **Interfaz moderna y adaptable**: Temas claro y oscuro, diseño _responsive_ y accesible.
 
 ## Estructura del proyecto
 
@@ -91,16 +91,9 @@ GRPC/
 - Internacionalización y soporte de temas.
 - Uso de hooks personalizados para acceso a datos y lógica de negocio.
 
-## Limitaciones y mejoras futuras
-
-- **Pruebas**: Actualmente no existen tests automatizados. Se recomienda añadir tests unitarios y de integración.
-- **Documentación**: Mejorar la documentación técnica y de despliegue.
-- **Gestión de errores**: Centralizar y mejorar la gestión de errores.
-- **Optimización de rendimiento**: Mejorar la carga de datos y la experiencia offline.
-
 ## Autor
 
-- José Manuel (Estudiante de DAM)
+- José Manuel Muñoz Ros
 
 ---
 
