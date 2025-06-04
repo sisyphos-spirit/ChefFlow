@@ -85,7 +85,6 @@ La navegación es intuitiva mediante pestañas inferiores y pantallas apiladas p
 
 ## 6. Preguntas frecuentes (FAQ)
 - **¿Necesito internet para usar la app?** Sí, ChefFlow requiere conexión para autenticación y gestión de recetas.
-- **¿Puedo recuperar mi contraseña?** Sí, desde la pantalla de inicio de sesión.
 - **¿Cómo comparto una receta?** Copia el ID desde los detalles de la receta y compártelo.
 - **¿Puedo cambiar el idioma?** Sí, desde la pestaña "Perfil".
 - **¿Cómo elimino mi cuenta?** Ponte en contacto con soporte para eliminar tu cuenta.
